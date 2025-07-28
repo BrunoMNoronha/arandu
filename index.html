@@ -654,6 +654,8 @@
 
       // --- CENA PRINCIPAL DO JOGO ---
       class DungeonScene extends Phaser.Scene {
+        // Guarda a última direção de movimento
+        lastMoveDirection = new Phaser.Math.Vector2(0, -1);
         constructor() {
           super("DungeonScene");
         }
@@ -1054,24 +1056,30 @@
         handleControls() {
           const speed = this.selectedClass.velocidade;
           this.player.body.setVelocity(0);
-          if (this.cursors.left.isDown) this.player.body.setVelocityX(-speed);
-          else if (this.cursors.right.isDown)
-            this.player.body.setVelocityX(speed);
-          if (this.cursors.up.isDown) this.player.body.setVelocityY(-speed);
-          else if (this.cursors.down.isDown)
-            this.player.body.setVelocityY(speed);
-          this.handleTouch();
+          let moveX = 0, moveY = 0;
+          if (this.cursors.left.isDown) moveX = -1;
+          else if (this.cursors.right.isDown) moveX = 1;
+          if (this.cursors.up.isDown) moveY = -1;
+          else if (this.cursors.down.isDown) moveY = 1;
+
           this.moveJoystick.update();
           this.attackJoystick.update();
           if (this.moveJoystick.pointer) {
-            this.player.body.setVelocity(
-              this.moveJoystick.vector.x * speed,
-              this.moveJoystick.vector.y * speed
-            );
+            moveX = this.moveJoystick.vector.x;
+            moveY = this.moveJoystick.vector.y;
           }
+
+          if (moveX !== 0 || moveY !== 0) {
+            this.player.body.setVelocity(moveX * speed, moveY * speed);
+            // Atualiza a última direção de movimento normalizada
+            this.lastMoveDirection.set(moveX, moveY).normalize();
+          }
+
           if (this.player.body.velocity.length() > speed) {
             this.player.body.velocity.normalize().scale(speed);
           }
+
+          this.handleTouch();
         }
 
         handleTouch() {
@@ -1114,19 +1122,14 @@
         }
 
         fireAttack(direction) {
-          // NOVO: Calcula a direção do ataque conforme joystick de ataque, movimento ou para cima
+          // Prioridade: joystick de ataque > parâmetro > última direção de movimento > para cima
           let dir = direction;
-          // Se o joystick de ataque está ativo, usa a direção dele
           if (this.attackJoystick.pointer) {
             dir = this.attackJoystick.fireDirection.clone();
           } else if (!dir || dir.length() === 0) {
-            // Se não, usa a direção do movimento
-            dir = this.player.body.velocity.clone();
+            dir = this.lastMoveDirection.clone();
             if (dir.length() === 0) {
-              // Se parado, atira para cima
               dir = new Phaser.Math.Vector2(0, -1);
-            } else {
-              dir.normalize();
             }
           }
 

@@ -807,9 +807,7 @@
           // Permitir ataque com a tecla espaço
           this.input.keyboard.on("keydown-SPACE", () => {
             if (!this.player.active) return;
-            // Usa a última direção do ataque ou para cima
-            const dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
-            this.fireAttack(dir);
+            this.fireAttack(); // direção será calculada automaticamente
           });
 
           // NOVO: Marcador visual para a área da habilidade
@@ -1116,6 +1114,22 @@
         }
 
         fireAttack(direction) {
+          // NOVO: Calcula a direção do ataque conforme joystick de ataque, movimento ou para cima
+          let dir = direction;
+          // Se o joystick de ataque está ativo, usa a direção dele
+          if (this.attackJoystick.pointer) {
+            dir = this.attackJoystick.fireDirection.clone();
+          } else if (!dir || dir.length() === 0) {
+            // Se não, usa a direção do movimento
+            dir = this.player.body.velocity.clone();
+            if (dir.length() === 0) {
+              // Se parado, atira para cima
+              dir = new Phaser.Math.Vector2(0, -1);
+            } else {
+              dir.normalize();
+            }
+          }
+
           const cooldown = this.selectedClass.attackCooldown;
           const lastAttack = this.player.getData("lastAttack");
 
@@ -1127,11 +1141,11 @@
             const attackPosition = new Phaser.Math.Vector2(
               this.player.x,
               this.player.y
-            ).add(direction.clone().scale(attackOffset));
+            ).add(dir.clone().scale(attackOffset));
             const slashGfx = this.add.graphics({
               lineStyle: { width: 4, color: 0xffffff, alpha: 0.8 },
             });
-            const angle = direction.angle();
+            const angle = dir.angle();
             slashGfx.slice(
               attackPosition.x,
               attackPosition.y,
@@ -1196,7 +1210,7 @@
 
             proj.setData({ damage: finalDamage, isCrit: isCrit });
             proj.enableBody(true, this.player.x, this.player.y, true, true);
-            proj.setVelocity(direction.x * 400, direction.y * 400);
+            proj.setVelocity(dir.x * 400, dir.y * 400);
           }
         }
 

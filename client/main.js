@@ -1,0 +1,1 @@
+console.log('Frontend do jogo está pronto!');

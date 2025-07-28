@@ -853,15 +853,14 @@
         update(time, delta) {
           this.time.now = time;
 
-          // NOVO: Lógica de atualização do modo de mira
+          // Atualiza o marcador de mira da habilidade, mas não pausa o jogo
           if (this.isTargetingAbility) {
             const pointer = this.input.activePointer;
             this.abilityTargetMarker.setPosition(
               pointer.worldX,
               pointer.worldY
             );
-            this.player.body.setVelocity(0); // Para o jogador enquanto mira
-            return; // Pula o resto da lógica de update
+            // O jogador pode se mover normalmente, não pausa o resto do update
           }
 
           if (!this.player.active) return;

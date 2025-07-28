@@ -340,17 +340,29 @@
             spawnEnemy(data) { const x = Phaser.Math.Between(0, this.scale.width); const y = Math.random() < 0.5 ? -30 : this.scale.height + 30; const enemy = this.enemies.get(x, y, data.texture); if (!enemy) return; enemy.spawn(data, this.currentWave); }
 
             fireAttack(direction) {
+                // Se não houver direção explícita (ex: joystick de ataque não está ativo), usa direção do movimento
+                let attackDir = direction;
+                if (!attackDir || (attackDir.x === 0 && attackDir.y === 0)) {
+                    // Usa a direção do movimento do jogador
+                    const vel = this.player.body.velocity;
+                    if (vel.length() > 0) {
+                        attackDir = vel.clone().normalize();
+                    } else {
+                        // Se parado, atira para cima por padrão
+                        attackDir = new Phaser.Math.Vector2(0, -1);
+                    }
+                }
+
                 const cooldown = this.selectedClass.attackCooldown;
                 const lastAttack = this.player.getData('lastAttack');
-
                 if (this.time.now < lastAttack + cooldown) return;
                 this.player.setData('lastAttack', this.time.now);
 
                 if (this.selectedClass.attackType === 'melee') {
                     const attackOffset = 40;
-                    const attackPosition = new Phaser.Math.Vector2(this.player.x, this.player.y).add(direction.clone().scale(attackOffset));
+                    const attackPosition = new Phaser.Math.Vector2(this.player.x, this.player.y).add(attackDir.clone().scale(attackOffset));
                     const slashGfx = this.add.graphics({ lineStyle: { width: 4, color: 0xffffff, alpha: 0.8 } });
-                    const angle = direction.angle();
+                    const angle = attackDir.angle();
                     slashGfx.slice(attackPosition.x, attackPosition.y, this.selectedClass.attackRange * 0.7, angle - Math.PI / 4, angle + Math.PI / 4, false);
                     slashGfx.strokePath();
                     this.tweens.add({ targets: slashGfx, alpha: 0, duration: 150, onComplete: () => slashGfx.destroy() });
@@ -376,8 +388,7 @@
                     if (closestEnemy) {
                         closestEnemy.takeDamage(this.player.getData('damage'));
                     }
-                }
-                else {
+                } else {
                     const proj = this.playerAttacks.get(this.player.x, this.player.y);
                     if (!proj) return;
 
@@ -390,7 +401,7 @@
 
                     proj.setData({ damage: finalDamage, isCrit: isCrit });
                     proj.enableBody(true, this.player.x, this.player.y, true, true);
-                    proj.setVelocity(direction.x * 400, direction.y * 400);
+                    proj.setVelocity(attackDir.x * 400, attackDir.y * 400);
                 }
             }
 

@@ -151,9 +151,40 @@
             }
 
             preload(){
-                const pGfx=this.make.graphics({add:false}); pGfx.fillStyle(this.selectedClass.cor,1).fillCircle(20,20,20); pGfx.lineStyle(2,0xffffff,0.8).strokeCircle(20,20,20); pGfx.generateTexture('player-texture',40,40).destroy();
-                const eGfx=this.make.graphics({add:false}); eGfx.fillStyle(GameData.Enemies.TATU_ZUMBI.cor,1).fillRoundedRect(0,0,30,30, 8); eGfx.generateTexture(GameData.Enemies.TATU_ZUMBI.texture,30,30).destroy();
-                const sGfx=this.make.graphics({add:false}); sGfx.fillStyle(GameData.Enemies.ARANHA_DE_DARDO.cor,1).fillCircle(18,18,18); for(let i=0;i<8;i++){sGfx.lineStyle(3,0x000000).lineBetween(18,18,18+25*Math.cos(i*Math.PI/4),18+25*Math.sin(i*Math.PI/4));} sGfx.generateTexture(GameData.Enemies.ARANHA_DE_DARDO.texture,36,36).destroy();
+                // Player
+                const pGfx = this.make.graphics({add:false});
+                pGfx.fillStyle(this.selectedClass.cor,1).fillCircle(20,20,20);
+                pGfx.lineStyle(2,0xffffff,0.8).strokeCircle(20,20,20);
+                pGfx.generateTexture('player-texture',40,40).destroy();
+
+                // Tatu Zumbi: corpo oval, casco, olhos vermelhos
+                const eGfx = this.make.graphics({add:false});
+                eGfx.fillStyle(GameData.Enemies.TATU_ZUMBI.cor,1).fillEllipse(15,18,28,22);
+                eGfx.fillStyle(0x444444,1).fillEllipse(15,18,18,12); // casco
+                eGfx.fillStyle(0xff3333,1).fillCircle(8,14,2).fillCircle(22,14,2); // olhos
+                eGfx.lineStyle(2,0x222222).strokeEllipse(15,18,28,22);
+                eGfx.generateTexture(GameData.Enemies.TATU_ZUMBI.texture,30,30).destroy();
+
+                // Aranha de Dardo: corpo, cabeça, pernas, ferrão
+                const sGfx = this.make.graphics({add:false});
+                sGfx.fillStyle(GameData.Enemies.ARANHA_DE_DARDO.cor,1).fillCircle(18,20,12); // corpo
+                sGfx.fillStyle(0x222222,1).fillCircle(18,10,6); // cabeça
+                // Pernas
+                sGfx.lineStyle(2,0x222222);
+                for(let i=0;i<8;i++){
+                    const a = Math.PI/4*i;
+                    sGfx.beginPath();
+                    sGfx.moveTo(18,20);
+                    sGfx.lineTo(18+18*Math.cos(a),20+18*Math.sin(a));
+                    sGfx.strokePath();
+                }
+                // Ferrão
+                sGfx.fillStyle(0xffcc00,1).fillTriangle(18,32,22,36,14,36);
+                // Olhos
+                sGfx.fillStyle(0xffffff,1).fillCircle(16,8,1.5).fillCircle(20,8,1.5);
+                sGfx.generateTexture(GameData.Enemies.ARANHA_DE_DARDO.texture,36,40).destroy();
+
+                // Projetéis e ícones
                 const prGfx=this.make.graphics({add:false}); prGfx.fillStyle(0xffff00,1).fillCircle(5,5,5); prGfx.generateTexture('player-projectile-texture',10,10).destroy();
                 const epGfx=this.make.graphics({add:false}); epGfx.fillStyle(0x9b59b6,1).fillTriangle(0,0,10,0,5,10); epGfx.generateTexture('enemy-projectile-texture',10,10).destroy();
                 const iconGfx = this.make.graphics({add: false}); iconGfx.fillStyle(0xffffff, 1).fillCircle(20, 12, 10).fillCircle(20, 35, 18); iconGfx.generateTexture('profile-icon', 40, 40);

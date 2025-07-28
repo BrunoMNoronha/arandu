@@ -177,6 +177,24 @@
                     lastAttack: 0, lastSpecialAttack: -Infinity // Permite o primeiro uso imediato
                 });
 
+                // --- ARMA VISUAL ---
+                let armaKey, armaGfx;
+                if (this.selectedClass.id === 'CACADOR') {
+                    armaKey = 'zarabatana';
+                    armaGfx = this.make.graphics({add:false});
+                    armaGfx.fillStyle(0x333333, 1).fillRect(0, 0, 38, 8);
+                    armaGfx.fillStyle(0x228B22, 1).fillCircle(36, 4, 6);
+                    armaGfx.generateTexture('zarabatana', 40, 12).destroy();
+                } else if (this.selectedClass.id === 'GUERREIRO') {
+                    armaKey = 'machado';
+                    armaGfx = this.make.graphics({add:false});
+                    armaGfx.fillStyle(0x8B4513, 1).fillRect(0, 4, 28, 6); // cabo
+                    armaGfx.fillStyle(0xcccccc, 1).fillRect(24, 0, 12, 14); // lâmina
+                    armaGfx.fillStyle(0x888888, 1).fillRect(32, 2, 6, 10); // detalhe
+                    armaGfx.generateTexture('machado', 40, 16).destroy();
+                }
+                this.weaponSprite = this.add.sprite(this.player.x, this.player.y, armaKey).setOrigin(0.1, 0.5).setDepth(2);
+
                 this.playerAttacks = this.createProjectileGroup('player-projectile-texture', 30);
                 this.enemyAttacks = this.createProjectileGroup('enemy-projectile-texture', 40);
 
@@ -215,7 +233,6 @@
                     }
                 }, this);
 
-
                 this.createHUD();
                 this.setupWaveSystem();
                 this.scale.on('resize', this.onResize, this);
@@ -231,7 +248,29 @@
                     this.abilityTargetMarker.setPosition(pointer.worldX, pointer.worldY);
                 }
 
-                if (!this.player.active) return;
+                // Atualiza arma visual
+                if (this.weaponSprite && this.player.active) {
+                    // Direção do ataque: joystick de ataque > movimento > cima
+                    let dir = null;
+                    if (this.attackJoystick && this.attackJoystick.vector.length() > 0) {
+                        dir = this.attackJoystick.vector.clone().normalize();
+                    } else if (this.player.body.velocity.length() > 0) {
+                        dir = this.player.body.velocity.clone().normalize();
+                    } else {
+                        dir = new Phaser.Math.Vector2(0, -1);
+                    }
+                    // Posição a frente do player
+                    const offset = 28;
+                    this.weaponSprite.x = this.player.x + dir.x * offset;
+                    this.weaponSprite.y = this.player.y + dir.y * offset;
+                    this.weaponSprite.rotation = dir.angle();
+                    this.weaponSprite.setVisible(true);
+                }
+
+                if (!this.player.active) {
+                    if (this.weaponSprite) this.weaponSprite.setVisible(false);
+                    return;
+                }
                 this.handleControls();
                 this.updateSpecialAbilityButton();
             }

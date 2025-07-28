@@ -804,6 +804,14 @@
           this.moveJoystick = new Joystick(this);
           this.attackJoystick = new Joystick(this, true);
 
+          // Permitir ataque com a tecla espaço
+          this.input.keyboard.on("keydown-SPACE", () => {
+            if (!this.player.active) return;
+            // Usa a última direção do ataque ou para cima
+            const dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
+            this.fireAttack(dir);
+          });
+
           // NOVO: Marcador visual para a área da habilidade
           const abilityRadius = this.selectedClass.ability.radius;
           this.abilityTargetMarker = this.add
@@ -836,6 +844,10 @@
           this.setupWaveSystem();
           this.scale.on("resize", this.onResize, this);
           this.isLandscape = this.scale.width > this.scale.height;
+
+          // Variáveis do painel de Game Over
+          this.gameOverPanel = null;
+          this.restartBtn = null;
         }
 
         update(time, delta) {
@@ -1261,26 +1273,62 @@
         defeatTarget(target) {
           if (target === this.player) {
             this.player.disableBody(true, true);
-            this.gameOverText = this.add
-              .text(
-                this.scale.width / 2,
-                this.scale.height / 2,
-                "FIM DE JOGO",
-                {
-                  fontSize: "56px",
-                  color: "#ff3333",
-                  stroke: "#000",
-                  strokeThickness: 6,
-                }
-              )
-              .setOrigin(0.5)
-              .setDepth(20);
+            this.showGameOverPanel();
           } else {
             target.die();
             this.enemiesRemaining--;
             this.updateWaveProgressText();
             this.checkWaveCompletion();
           }
+        }
+
+        // NOVO: Painel de Game Over com botão de recomeçar e atalho Enter
+        showGameOverPanel() {
+          const { width, height } = this.scale;
+          // Evita múltiplos painéis
+          if (this.gameOverPanel) return;
+
+          this.gameOverPanel = this.add.graphics();
+          this.gameOverPanel
+            .fillStyle(0x1a1a1a, 0.95)
+            .fillRoundedRect(width / 2 - 200, height / 2 - 120, 400, 240, 20)
+            .setDepth(100);
+
+          this.gameOverText = this.add.text(
+            width / 2,
+            height / 2 - 40,
+            "FIM DE JOGO",
+            {
+              fontSize: "56px",
+              color: "#ff3333",
+              stroke: "#000",
+              strokeThickness: 6,
+            }
+          ).setOrigin(0.5).setDepth(101);
+
+          this.restartBtn = this.add.text(
+            width / 2,
+            height / 2 + 40,
+            "Recomeçar",
+            {
+              fontSize: "32px",
+              color: "#00ff7f",
+              backgroundColor: "#222",
+              padding: { left: 30, right: 30, top: 10, bottom: 10 },
+              fontStyle: "bold",
+              stroke: "#000",
+              strokeThickness: 4,
+            }
+          ).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
+
+          this.restartBtn.on("pointerdown", () => {
+            this.scene.start("CharacterSelectScene");
+          });
+
+          // Permite recomeçar com Enter
+          this.input.keyboard.once("keydown-ENTER", () => {
+            this.scene.start("CharacterSelectScene");
+          });
         }
 
         gainXP(amount) {

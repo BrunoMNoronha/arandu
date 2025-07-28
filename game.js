@@ -428,6 +428,10 @@
                 if (this.time.now < lastAttack + cooldown) return;
                 this.player.setData('lastAttack', this.time.now);
 
+                // NOVO: Mantenha a direção do movimento conforme o ataque
+                const speed = this.selectedClass.velocidade;
+                this.player.body.setVelocity(attackDir.x * speed, attackDir.y * speed);
+
                 if (this.selectedClass.attackType === 'melee') {
                     const attackOffset = 40;
                     const attackPosition = new Phaser.Math.Vector2(this.player.x, this.player.y).add(attackDir.clone().scale(attackOffset));

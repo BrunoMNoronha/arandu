@@ -120,6 +120,19 @@
                 const placeholderH = panelHeight - 120;
                 this.createPlaceholderBox(placeholderX, placeholderY, placeholderW, placeholderH / 2 - 10, 'Equipamentos');
                 this.createPlaceholderBox(placeholderX, placeholderY + placeholderH / 2 + 10, placeholderW, placeholderH / 2 - 10, 'Itens');
+
+                // Botão para retornar à seleção de personagem
+                const returnButton = this.add.text(panelX, panelY + panelHeight / 2 - 35, 'Voltar à Seleção', {
+                    fontSize: '20px', color: '#ffc107', fontStyle: 'bold', align: 'center',
+                    backgroundColor: '#333', padding: { top: 8, bottom: 8, left: 15, right: 15 }
+                }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+                returnButton.on('pointerdown', () => {
+                    this.scene.stop('DungeonScene');
+                    this.scene.stop(); // Para a própria UIScene
+                    this.scene.start('CharacterSelectScene');
+                });
+
                 this.input.keyboard.once('keydown-ESC', () => this.closeMenu());
             }
             createAttributeLine(x, y, label, value, labelStyle, valueStyle) { this.add.text(x, y, label, labelStyle).setOrigin(0, 0.5); this.add.text(x + 180, y, value, valueStyle).setOrigin(0, 0.5); }

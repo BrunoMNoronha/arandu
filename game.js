@@ -197,12 +197,30 @@
             create(){
                 this.input.addPointer(2);
 
-                // Desktop: ataque com espaço
+                // Desktop: auto ataque com espaço
                 if (!this.sys.game.device.input.touch) {
+                    this.spaceAttackInterval = null;
                     this.input.keyboard.on('keydown-SPACE', () => {
-                        // Usa a última direção de ataque
-                        let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
-                        this.fireAttack(dir);
+                        if (!this.spaceAttackInterval) {
+                            // Ataca imediatamente
+                            let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
+                            this.fireAttack(dir);
+                            // Inicia auto ataque
+                            this.spaceAttackInterval = this.time.addEvent({
+                                delay: this.selectedClass.attackCooldown,
+                                loop: true,
+                                callback: () => {
+                                    let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
+                                    this.fireAttack(dir);
+                                }
+                            });
+                        }
+                    });
+                    this.input.keyboard.on('keyup-SPACE', () => {
+                        if (this.spaceAttackInterval) {
+                            this.spaceAttackInterval.remove();
+                            this.spaceAttackInterval = null;
+                        }
                     });
                 }
                 this.time.now = 0;

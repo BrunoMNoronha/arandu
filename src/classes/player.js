@@ -4,6 +4,7 @@
 
 import { fireAttack, playerHitEnemy } from '../utils/attackUtils.js';
 import { handleControls } from '../utils/controlUtils.js';
+import { calcPhysicalAttack, calcMaxHp } from '../utils/attributeUtils.js';
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, selectedClass) {
@@ -18,13 +19,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             level: 1,
             xp: 0,
             xpToNextLevel: 100,
-            maxHp: this.selectedClass.vida,
-            hp: this.selectedClass.vida,
-            damage: this.selectedClass.dano,
+            attributes: { ...this.selectedClass.baseAttributes },
+            maxHp: 0,
+            hp: 0,
+            damage: 0,
             isInvulnerable: false,
             lastAttack: 0,
             lastSpecialAttack: -Infinity
         });
+
+        this.recomputeStats();
+        this.setData('hp', this.getData('maxHp'));
 
         this.setCollideWorldBounds(true);
     }
@@ -36,6 +41,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // A lógica de atualização da arma e outras atualizações que estavam no `update` de `DungeonScene`
         // podem ser movidas para cá ou gerenciadas de forma diferente.
+    }
+
+    recomputeStats() {
+        const attrs = this.getData('attributes');
+        const newMaxHp = calcMaxHp(attrs);
+        const newDamage = calcPhysicalAttack(attrs);
+
+        this.setData('maxHp', newMaxHp);
+        this.setData('damage', newDamage);
+
+        if (this.getData('hp') > newMaxHp) {
+            this.setData('hp', newMaxHp);
+        }
     }
 
     takeDamage(amount) {
@@ -83,14 +101,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const newLevel = this.getData('level') + 1;
         this.setData('level', newLevel);
 
-        // Melhorias de status ao subir de nível
-        const hpGain = 10;
-        const damageGain = 2;
-        const newMaxHp = this.getData('maxHp') + hpGain;
+        // Incrementa atributos com base na classe
+        const growth = this.selectedClass.growth;
+        const attrs = this.getData('attributes');
+        for (const key of Object.keys(attrs)) {
+            attrs[key] += growth[key] || 0;
+        }
+        this.setData('attributes', attrs);
 
-        this.setData('maxHp', newMaxHp);
-        this.setData('hp', newMaxHp); // Cura total ao subir de nível
-        this.setData('damage', this.getData('damage') + damageGain);
+        this.recomputeStats();
+        this.setData('hp', this.getData('maxHp')); // Cura total ao subir de nível
         this.setData('xpToNextLevel', Math.floor(this.getData('xpToNextLevel') * 1.5));
 
         this.scene.showFloatingText('Level Up!', this.x, this.y - 50, false, '#ffd700');

@@ -15,6 +15,7 @@ export const GameData = {
             id: 'GUERREIRO', nome: 'Guerreiro de Ossos', desc: 'A força bruta da floresta, inabalável.', cor: 0xc0392b,
             velocidade: 170, vida: 180, dano: 25, attackType: 'melee', attackRange: 80, attackCooldown: 400,
             damageReduction: 0.15,
+            critChance: 0.05, critMultiplier: 1.5,
             ability: { name: 'Impacto Sísmico', cooldown: 15000, damageMultiplier: 1, stunDuration: 2000, radius: 150, icon: 'shockwave-icon' }
         }
     },

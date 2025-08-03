@@ -212,7 +212,7 @@ export default class DungeonScene extends Phaser.Scene {
     }
 
     checkWaveCompletion() {
-        if (this.waveState === 'IN_WAVE' && this.enemies.countActive(true) === 0) {
+        if (this.waveState === 'IN_WAVE' && this.enemiesRemaining === 0) {
             this.endWave();
         }
     }

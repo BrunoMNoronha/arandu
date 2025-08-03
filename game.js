@@ -142,10 +142,11 @@
                 this.createAttributeLine(attrX, attrY, 'Nível:', this.playerData.level, labelStyle, valueStyle); attrY += 30;
                 this.createAttributeLine(attrX, attrY, 'Experiência:', `${this.playerData.xp} / ${this.playerData.xpToNextLevel}`, labelStyle, valueStyle); attrY += 30;
                 this.createAttributeLine(attrX, attrY, 'Vida:', `${Math.round(this.playerData.hp)} / ${this.playerData.maxHp}`, labelStyle, valueStyle); attrY += 30;
-                this.createAttributeLine(attrX, attrY, 'Dano Base:', this.playerData.damage, labelStyle, valueStyle); attrY += 30;
-                this.createAttributeLine(attrX, attrY, 'Velocidade:', this.classData.velocidade, labelStyle, valueStyle); attrY += 40;
-                if (this.classData.damageReduction) { this.createAttributeLine(attrX, attrY, 'Redução de Dano:', `${this.classData.damageReduction * 100}%`, labelStyle, valueStyle); attrY += 30; }
-                if (this.classData.critChance) { this.createAttributeLine(attrX, attrY, 'Chance de Crítico:', `${this.classData.critChance * 100}%`, labelStyle, valueStyle); attrY += 30; this.createAttributeLine(attrX, attrY, 'Dano Crítico:', `+${(this.classData.critMultiplier - 1) * 100}%`, labelStyle, valueStyle); attrY += 30; }
+                this.createAttributeLine(attrX, attrY, 'Dano:', this.playerData.damage, labelStyle, valueStyle); attrY += 30;
+                this.createAttributeLine(attrX, attrY, 'Velocidade:', this.playerData.velocidade || this.classData.velocidade, labelStyle, valueStyle); attrY += 30;
+                this.createAttributeLine(attrX, attrY, 'Cooldown Ataque:', (this.playerData.attackCooldown || this.classData.attackCooldown) + 'ms', labelStyle, valueStyle); attrY += 30;
+                if (this.playerData.damageReduction) { this.createAttributeLine(attrX, attrY, 'Redução de Dano:', `${Math.round(this.playerData.damageReduction * 100)}%`, labelStyle, valueStyle); attrY += 30; }
+                if (this.playerData.critChance) { this.createAttributeLine(attrX, attrY, 'Chance de Crítico:', `${Math.round(this.playerData.critChance * 100)}%`, labelStyle, valueStyle); attrY += 30; this.createAttributeLine(attrX, attrY, 'Dano Crítico:', `x${this.playerData.critMultiplier ? this.playerData.critMultiplier.toFixed(2) : this.classData.critMultiplier}`, labelStyle, valueStyle); attrY += 30; }
                 const placeholderX = panelX + 50;
                 const placeholderY = panelY - panelHeight / 2 + 80;
                 const placeholderW = panelWidth / 2 - 80;
@@ -178,15 +179,17 @@
 
             init(data){
                 this.selectedClass = data.selectedClass;
-                // NOVO: Estado para controlar a mira da habilidade
                 this.isTargetingAbility = false;
+                // Inicializa direção padrão do ataque
+                this.lastAttackDirection = new Phaser.Math.Vector2(0, -1);
             }
 
             preload(){
                 // Player
                 const pGfx = this.make.graphics({add:false});
-                pGfx.fillStyle(this.selectedClass.cor,1).fillCircle(20,20,20);
-                pGfx.lineStyle(2,0xffffff,0.8).strokeCircle(20,20,20);
+                // Removido círculo de fundo do personagem
+                pGfx.fillStyle(this.selectedClass.cor,1).fillCircle(20,20,16);
+                pGfx.lineStyle(2,0xffffff,0.8).strokeCircle(20,20,16);
                 pGfx.generateTexture('player-texture',40,40).destroy();
 
                 // Tatu Zumbi: corpo oval, casco, olhos vermelhos
@@ -240,7 +243,7 @@
             }
 
             create(){
-                this.input.addPointer(2);
+                this.input.addPointer(1);
 
                 // Desktop: auto ataque com espaço
                 if (!this.sys.game.device.input.touch) {
@@ -347,7 +350,7 @@
             update(time, delta){
                 this.time.now = time;
 
-                // NOVO: Lógica de atualização do modo de mira
+                // Lógica de atualização do modo de mira
                 if (this.isTargetingAbility) {
                     const pointer = this.input.activePointer;
                     this.abilityTargetMarker.setPosition(pointer.worldX, pointer.worldY);
@@ -355,10 +358,6 @@
 
                 // Atualiza arma visual
                 if (this.weaponSprite && this.player.active) {
-                    // Direção do ataque: joystick de ataque > movimento > mantém última direção
-                    if (!this.lastAttackDirection) {
-                        this.lastAttackDirection = new Phaser.Math.Vector2(0, -1);
-                    }
                     let dir = this.lastAttackDirection;
                     if (this.attackJoystick && this.attackJoystick.vector.length() > 0) {
                         dir = this.attackJoystick.vector.clone().normalize();
@@ -367,7 +366,6 @@
                         dir = this.player.body.velocity.clone().normalize();
                         this.lastAttackDirection = dir;
                     }
-                    // Mantém a última direção se parado
                     const offset = 28;
                     this.weaponSprite.x = this.player.x + dir.x * offset;
                     this.weaponSprite.y = this.player.y + dir.y * offset;
@@ -375,8 +373,8 @@
                     this.weaponSprite.setVisible(true);
                 }
 
-                if (!this.player.active) {
-                    if (this.weaponSprite) this.weaponSprite.setVisible(false);
+                if (!this.player.active && this.weaponSprite) {
+                    this.weaponSprite.setVisible(false);
                     return;
                 }
                 this.handleControls();

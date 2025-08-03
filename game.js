@@ -196,6 +196,15 @@
 
             create(){
                 this.input.addPointer(2);
+
+                // Desktop: ataque com espaço
+                if (!this.sys.game.device.input.touch) {
+                    this.input.keyboard.on('keydown-SPACE', () => {
+                        // Usa a última direção de ataque
+                        let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
+                        this.fireAttack(dir);
+                    });
+                }
                 this.time.now = 0;
                 this.cameras.main.fadeIn(500, 0, 0, 0);
                 this.background = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x1a2b1a).setOrigin(0).setDepth(-1);

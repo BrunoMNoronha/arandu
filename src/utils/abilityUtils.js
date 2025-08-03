@@ -1,20 +1,33 @@
 export function useArrowRain(scene, targetPos) {
     const ability = scene.selectedClass.ability;
-    for (let i = 0; i < ability.waves; i++) {
-        scene.time.delayedCall(i * 300, () => {
-            for (let a = 0; a < 8; a++) {
-                const angle = Phaser.Math.DegToRad(45 * a);
-                const proj = scene.playerAttacks.get(targetPos.x, targetPos.y, 'player-projectile-texture');
-                if (proj) {
-                    proj.enableBody(true, targetPos.x, targetPos.y, true, true);
-                    proj.setActive(true).setVisible(true);
-                    proj.setData('damage', scene.player.getData('damage') * ability.damageMultiplier);
-                    scene.physics.velocityFromRotation(angle, 350, proj.body.velocity);
-                }
+    const numProjectiles = ability.waves * 5; // Aumentando a densidade da chuva
+    const radius = ability.radius;
+
+    for (let i = 0; i < numProjectiles; i++) {
+        scene.time.delayedCall(i * 50, () => {
+            const offsetX = Phaser.Math.Between(-radius, radius);
+            const offsetY = Phaser.Math.Between(-radius, radius);
+            
+            // Garante que o ponto esteja dentro do círculo
+            const targetPoint = new Phaser.Math.Vector2(targetPos.x + offsetX, targetPos.y + offsetY);
+            if (targetPoint.distance(targetPos) > radius) {
+                targetPoint.subtract(targetPos).normalize().scale(radius).add(targetPos);
+            }
+
+            const startY = targetPoint.y - 400; // Começa bem acima
+            const proj = scene.playerAttacks.get(targetPoint.x, startY, 'player-projectile-texture');
+
+            if (proj) {
+                proj.enableBody(true, targetPoint.x, startY, true, true);
+                proj.setActive(true).setVisible(true);
+                proj.setData('damage', scene.player.getData('damage') * ability.damageMultiplier);
+                proj.setData('isCrit', false); // Habilidades podem ou não critar, decidi que não por padrão
+                proj.body.setGravityY(800); // Puxa o projétil para baixo
+                proj.body.velocity.x = 0; // Sem movimento horizontal inicial
             }
         });
     }
-    scene.showFloatingText('Chuva de Flechas!', targetPos.x, targetPos.y, true, '#00ff00');
+    scene.showFloatingText('Chuva de Flechas!', targetPos.x, targetPos.y, false, '#00ff00');
 }
 
 export function useShockwave(scene, targetPos) {

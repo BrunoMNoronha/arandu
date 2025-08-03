@@ -248,24 +248,6 @@
                 }
         // Mobile: auto ataque ao manter pressionado o botão de ataque do joystick
         this.joystickAttackInterval = null;
-        const originalActivate = this.attackJoystick.activate.bind(this.attackJoystick);
-        this.attackJoystick.activate = (pointer) => {
-            originalActivate(pointer);
-            if (!this.joystickAttackInterval) {
-                // Ataca imediatamente
-                let dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
-                this.fireAttack(dir);
-                // Inicia auto ataque
-                this.joystickAttackInterval = this.time.addEvent({
-                    delay: this.selectedClass.attackCooldown,
-                    loop: true,
-                    callback: () => {
-                        let dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
-                        this.fireAttack(dir);
-                    }
-                });
-            }
-        };
                 this.time.now = 0;
                 this.cameras.main.fadeIn(500, 0, 0, 0);
                 this.background = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x1a2b1a).setOrigin(0).setDepth(-1);
@@ -464,20 +446,42 @@
             handleControls() { const speed = this.selectedClass.velocidade; this.player.body.setVelocity(0); if (this.cursors.left.isDown) this.player.body.setVelocityX(-speed); else if (this.cursors.right.isDown) this.player.body.setVelocityX(speed); if (this.cursors.up.isDown) this.player.body.setVelocityY(-speed); else if (this.cursors.down.isDown) this.player.body.setVelocityY(speed); this.handleTouch(); this.moveJoystick.update(); this.attackJoystick.update(); if (this.moveJoystick.pointer) { this.player.body.setVelocity(this.moveJoystick.vector.x * speed, this.moveJoystick.vector.y * speed); } if (this.player.body.velocity.length() > speed) { this.player.body.velocity.normalize().scale(speed); } }
 
             handleTouch() {
-                for (const ptr of this.input.manager.pointers) {
-                    if (ptr.isDown) {
-                        if (this.moveJoystick.pointer === ptr || this.attackJoystick.pointer === ptr) continue;
-                        let isMoveZone, isAttackZone;
-                        const { width, height } = this.scale;
-                        if (this.isLandscape) { isMoveZone = ptr.x < width / 2 && ptr.y > height / 2; isAttackZone = ptr.x > width / 2 && ptr.y > height / 2; }
-                        else { isMoveZone = ptr.x < width / 2; isAttackZone = ptr.x > width / 2; }
-                        if (isMoveZone && !this.moveJoystick.pointer) { this.moveJoystick.activate(ptr); }
-                        else if (isAttackZone && !this.attackJoystick.pointer) { this.attackJoystick.activate(ptr); }
-                    } else {
-                        if (this.moveJoystick.pointer === ptr) this.moveJoystick.deactivate();
-                        if (this.attackJoystick.pointer === ptr) this.attackJoystick.deactivate();
+        for (const ptr of this.input.manager.pointers) {
+            if (ptr.isDown) {
+                if (this.moveJoystick.pointer === ptr || this.attackJoystick.pointer === ptr) continue;
+                let isMoveZone, isAttackZone;
+                const { width, height } = this.scale;
+                if (this.isLandscape) { isMoveZone = ptr.x < width / 2 && ptr.y > height / 2; isAttackZone = ptr.x > width / 2 && ptr.y > height / 2; }
+                else { isMoveZone = ptr.x < width / 2; isAttackZone = ptr.x > width / 2; }
+                if (isMoveZone && !this.moveJoystick.pointer) { this.moveJoystick.activate(ptr); }
+                else if (isAttackZone && !this.attackJoystick.pointer) {
+                    this.attackJoystick.activate(ptr);
+                    // Inicia auto ataque do joystick
+                    if (!this.joystickAttackInterval) {
+                        let dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
+                        this.fireAttack(dir);
+                        this.joystickAttackInterval = this.time.addEvent({
+                            delay: this.selectedClass.attackCooldown,
+                            loop: true,
+                            callback: () => {
+                                let dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
+                                this.fireAttack(dir);
+                            }
+                        });
                     }
                 }
+            } else {
+                if (this.moveJoystick.pointer === ptr) this.moveJoystick.deactivate();
+                if (this.attackJoystick.pointer === ptr) {
+                    this.attackJoystick.deactivate();
+                    // Cancela auto ataque do joystick
+                    if (this.joystickAttackInterval) {
+                        this.joystickAttackInterval.remove();
+                        this.joystickAttackInterval = null;
+                    }
+                }
+            }
+        }
             }
 
             spawnEnemy(data) { const x = Phaser.Math.Between(0, this.scale.width); const y = Math.random() < 0.5 ? -30 : this.scale.height + 30; const enemy = this.enemies.get(x, y, data.texture); if (!enemy) return; enemy.spawn(data, this.currentWave); }

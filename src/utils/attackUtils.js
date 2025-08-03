@@ -150,26 +150,3 @@ export function defeatTarget(scene, target) {
         scene.checkWaveCompletion();
     }
 }
-
-export function gainXP(scene, amount) {
-    let xp = scene.player.getData('xp') + amount;
-    let next = scene.player.getData('xpToNextLevel');
-    while (xp >= next) {
-        xp -= next;
-        levelUp(scene);
-        next = scene.player.getData('xpToNextLevel');
-    }
-    scene.player.setData('xp', xp);
-    scene.showFloatingText(`+${amount} XP`, scene.player.x, scene.player.y - 40, false, '#00ff7f');
-    scene.updatePlayerHud();
-}
-
-export function levelUp(scene) {
-    const p = scene.player;
-    const newLvl = p.getData('level') + 1;
-    p.setData('level', newLvl);
-    const newMaxHp = Math.floor(p.getData('maxHp') * 1.15);
-    const newDmg = Math.floor(p.getData('damage') * 1.1);
-    p.setData({ maxHp: newMaxHp, hp: newMaxHp, damage: newDmg, xpToNextLevel: Math.floor(p.getData('xpToNextLevel') * 1.5) });
-    scene.showFloatingText('LEVEL UP!', p.x, p.y, false, '#ffff00');
-}

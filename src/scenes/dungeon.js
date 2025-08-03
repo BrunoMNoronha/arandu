@@ -1,14 +1,15 @@
 // dungeon.js
 // Cena principal do jogo (Dungeon)
-// Dependências: Phaser, GameData, WaveConfig, Enemy, Joystick
+// Dependências: Phaser, GameData, WaveManager, Enemy, Joystick
 
-import { GameData, WaveConfig } from '../data/data.js';
+import { GameData } from '../data/data.js';
 import Enemy from '../classes/enemy.js';
 import Joystick from '../classes/joystick.js';
 import { createHUD, updatePlayerHud, updateWaveProgressText, showFloatingText, repositionHUD, updateSpecialAbilityUI } from '../utils/hudUtils.js';
 import { handleControls } from '../utils/controlUtils.js';
 import { fireAttack, projectileHitEnemy, projectileHitPlayer, playerHitEnemy } from '../utils/attackUtils.js';
 import { generatePlayerTexture, generateTatuZumbiTexture, generateAranhaDeDardoTexture, generateBossJiboiaTexture, generateWeaponTexture, generateProjectileTextures, generateIcons } from '../utils/assetUtils.js';
+import WaveManager from '../utils/waveManager.js';
 
 export default class DungeonScene extends Phaser.Scene {
     constructor(){ super('DungeonScene'); }
@@ -127,7 +128,8 @@ export default class DungeonScene extends Phaser.Scene {
         }, this);
 
         createHUD(this);
-        this.setupWaveSystem();
+        this.waveManager = new WaveManager(this);
+        this.waveManager.setupWaveSystem();
         this.scale.on('resize', this.onResize, this);
         this.isLandscape = this.scale.width > this.scale.height;
     }
@@ -183,72 +185,6 @@ export default class DungeonScene extends Phaser.Scene {
 
     showFloatingText(txt, x, y, isCrit = false, color = '#ffdddd') {
         showFloatingText(this, txt, x, y, isCrit, color);
-    }
-
-    setupWaveSystem() {
-        this.currentWave = 0;
-        this.waveState = 'BETWEEN_WAVES';
-        // Texto de onda e contagem regressiva
-        const textStyle = { fontSize:'48px', color:'#ffffff', stroke:'#000000', strokeThickness: 6, align: 'center' };
-        this.waveInfoText = this.add.text(this.scale.width/2, this.scale.height/2 - 50, '', textStyle).setOrigin(0.5).setDepth(30);
-        this.waveCountdownText = this.add.text(this.scale.width/2, this.scale.height/2 + 20, '', textStyle).setOrigin(0.5).setDepth(30);
-        this.time.delayedCall(WaveConfig.initialWaveDelay || 1000, this.startNextWave, [], this);
-    }
-
-    startNextWave() {
-        this.currentWave++;
-        this.waveState = 'IN_WAVE';
-        this.waveInfoText.setText(`Onda ${this.currentWave}`).setVisible(true);
-        this.waveCountdownText.setVisible(false);
-        this.time.delayedCall(2000, () => this.waveInfoText.setVisible(false), [], this);
-        const waveDef = WaveConfig.definitions[this.currentWave - 1] || this.generateProceduralWave();
-        this.spawnWave(waveDef);
-    }
-
-    checkWaveCompletion() {
-        if (this.waveState === 'IN_WAVE' && this.enemies.countActive(true) === 0) {
-            this.endWave();
-        }
-    }
-
-    endWave() {
-        this.waveState = 'BETWEEN_WAVES';
-        this.waveInfoText.setText('Onda Concluída!').setVisible(true);
-        this.waveProgressText.setVisible(false);
-        let countdown = (WaveConfig.betweenWavesDelay || 5000) / 1000;
-        this.waveCountdownText.setText(`Próxima onda em ${countdown}...`).setVisible(true);
-        this.time.addEvent({ delay: 1000, repeat: countdown - 1, callback: () => {
-            countdown--;
-            this.waveCountdownText.setText(`Próxima onda em ${countdown}...`);
-        }});
-        this.time.delayedCall(WaveConfig.betweenWavesDelay || 5000, this.startNextWave, [], this);
-    }
-
-    spawnWave(waveDef) {
-        this.enemiesRemaining = Object.values(waveDef).reduce((a, b) => a + b, 0);
-        Object.entries(waveDef).forEach(([enemyId, count]) => {
-            for (let i = 0; i < count; i++) {
-                this.time.delayedCall(i * (WaveConfig.spawnInterval || 350), () => {
-                    this.spawnEnemy(GameData.Enemies[enemyId]);
-                });
-            }
-        });
-    }
-
-    generateProceduralWave() {
-        const proceduralPoints = WaveConfig.proceduralBasePoints + (this.currentWave - WaveConfig.definitions.length) * WaveConfig.proceduralPointGrowth;
-        let pointsRemaining = proceduralPoints;
-        const wave = {};
-        const enemyTypes = Object.values(GameData.Enemies).filter(e => !e.boss).sort((a, b) => b.cost - a.cost);
-
-        while (pointsRemaining > 0 && enemyTypes.length > 0) {
-            const availableEnemies = enemyTypes.filter(e => e.cost <= pointsRemaining);
-            if (availableEnemies.length === 0) break;
-            const enemyType = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
-            wave[enemyType.id] = (wave[enemyType.id] || 0) + 1;
-            pointsRemaining -= enemyType.cost;
-        }
-        return wave;
     }
 
     createProjectileGroup(texture, maxSize) {

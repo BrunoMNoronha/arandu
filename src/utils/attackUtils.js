@@ -138,7 +138,7 @@ export function defeatTarget(scene, target) {
         target.die();
         scene.enemiesRemaining--;
         scene.updateWaveProgressText();
-        scene.checkWaveCompletion();
+        scene.waveManager.checkWaveCompletion();
     }
 }
 

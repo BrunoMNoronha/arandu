@@ -14,17 +14,25 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.selectedClass = selectedClass;
         this.lastAttackDirection = new Phaser.Math.Vector2(0, -1);
 
+        // Atributos base do jogador, utilizados para recalcular os demais
+        // status sempre que houver um level up.
+        this.baseStats = {
+            vida: selectedClass.vida,
+            dano: selectedClass.dano,
+            defesa: selectedClass.defesa || 0
+        };
+
         this.setData({
             level: 1,
             xp: 0,
             xpToNextLevel: 100,
-            maxHp: this.selectedClass.vida,
-            hp: this.selectedClass.vida,
-            damage: this.selectedClass.dano,
             isInvulnerable: false,
             lastAttack: 0,
             lastSpecialAttack: -Infinity
         });
+
+        // Calcula HP, dano e outros atributos derivados dos primários
+        this.recomputeStats();
 
         this.setCollideWorldBounds(true);
     }
@@ -83,19 +91,27 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const newLevel = this.getData('level') + 1;
         this.setData('level', newLevel);
 
-        // Melhorias de status ao subir de nível
-        const hpGain = 10;
-        const damageGain = 2;
-        const newMaxHp = this.getData('maxHp') + hpGain;
+        // Incrementa os atributos primários de acordo com o crescimento da classe
+        const growth = this.selectedClass.growth || {};
+        for (const [key, value] of Object.entries(growth)) {
+            this.baseStats[key] = (this.baseStats[key] || 0) + value;
+        }
 
-        this.setData('maxHp', newMaxHp);
-        this.setData('hp', newMaxHp); // Cura total ao subir de nível
-        this.setData('damage', this.getData('damage') + damageGain);
+        // Recalcula HP, dano e outros atributos derivados
+        this.recomputeStats();
         this.setData('xpToNextLevel', Math.floor(this.getData('xpToNextLevel') * 1.5));
 
         this.scene.showFloatingText('Level Up!', this.x, this.y - 50, false, '#ffd700');
     }
 
+    // Atualiza os status derivados (HP, dano, defesa...) com base nos atributos primários
+    recomputeStats() {
+        const { vida = 0, dano = 0, defesa = 0 } = this.baseStats;
+        this.setData('maxHp', vida);
+        this.setData('hp', vida);
+        this.setData('damage', dano);
+        this.setData('defense', defesa);
+    }
 
 
     die() {

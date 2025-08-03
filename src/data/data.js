@@ -9,12 +9,14 @@ export const GameData = {
             id: 'CACADOR', nome: 'Caçador das Sombras', desc: 'Mestre do arco e das armadilhas furtivas.', cor: 0x8e44ad,
             velocidade: 230, vida: 90, dano: 22, attackType: 'ranged', attackCooldown: 350,
             critChance: 0.15, critMultiplier: 1.5,
+            growth: { vida: 8, dano: 3 },
             ability: { name: 'Chuva de Flechas', cooldown: 12000, damageMultiplier: 0.5, waves: 4, duration: 2000, radius: 120, icon: 'arrow-rain-icon' }
         },
         GUERREIRO: {
             id: 'GUERREIRO', nome: 'Guerreiro de Ossos', desc: 'A força bruta da floresta, inabalável.', cor: 0xc0392b,
             velocidade: 170, vida: 180, dano: 25, attackType: 'melee', attackRange: 80, attackCooldown: 400,
             damageReduction: 0.15,
+            growth: { vida: 15, dano: 2, defesa: 2 },
             ability: { name: 'Impacto Sísmico', cooldown: 15000, damageMultiplier: 1, stunDuration: 2000, radius: 150, icon: 'shockwave-icon' }
         }
     },

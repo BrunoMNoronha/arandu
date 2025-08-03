@@ -25,7 +25,6 @@ export default class DungeonScene extends Phaser.Scene {
     init(data){
         this.selectedClass = data.selectedClass;
         this.isTargetingAbility = false;
-        this.lastAttackDirection = new Phaser.Math.Vector2(0, -1);
     }
 
     preload(){
@@ -62,13 +61,13 @@ export default class DungeonScene extends Phaser.Scene {
             this.spaceAttackInterval = null;
             this.input.keyboard.on('keydown-SPACE', () => {
                 if (!this.spaceAttackInterval) {
-                    let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
+                    let dir = this.player.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
                     fireAttack(this, dir);
                     this.spaceAttackInterval = this.time.addEvent({
                         delay: this.player.getData('attackCooldown'),
                         loop: true,
                         callback: () => {
-                            let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
+                            let dir = this.player.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
                             fireAttack(this, dir);
                         }
                     });
@@ -152,15 +151,17 @@ export default class DungeonScene extends Phaser.Scene {
 
         this.player.update(time, delta, this.cursors, this.moveJoystick, this.attackJoystick);
 
+        let dir = this.player.lastAttackDirection;
+        if (this.attackJoystick && this.attackJoystick.vector.length() > 0) {
+            dir = this.attackJoystick.vector.clone().normalize();
+            this.player.lastAttackDirection = dir;
+        } else if (this.player.body.velocity.length() > 0) {
+            dir = this.player.body.velocity.clone().normalize();
+            this.player.lastAttackDirection = dir;
+        }
+        this.attackJoystick.fireDirection = dir;
+
         if (this.weaponSprite && this.player.active) {
-            let dir = this.player.lastAttackDirection;
-            if (this.attackJoystick && this.attackJoystick.vector.length() > 0) {
-                dir = this.attackJoystick.vector.clone().normalize();
-                this.player.lastAttackDirection = dir;
-            } else if (this.player.body.velocity.length() > 0) {
-                dir = this.player.body.velocity.clone().normalize();
-                this.player.lastAttackDirection = dir;
-            }
             const offset = 28;
             this.weaponSprite.x = this.player.x + dir.x * offset;
             this.weaponSprite.y = this.player.y + dir.y * offset;
@@ -296,7 +297,9 @@ export default class DungeonScene extends Phaser.Scene {
         const cooldown = this.selectedClass.ability.cooldown;
         if ((now - last) < cooldown) return;
 
-        if (this.selectedClass.ability.radius > 0) {
+        if (this.selectedClass.id === 'GUERREIRO') {
+            this.executeSpecialAbility({ x: this.player.x, y: this.player.y });
+        } else if (this.selectedClass.ability.radius > 0) {
             this.isTargetingAbility = true;
             this.abilityTargetMarker.setVisible(true);
         } else {
@@ -312,7 +315,10 @@ export default class DungeonScene extends Phaser.Scene {
         };
         const abilityFn = abilityMap[this.selectedClass.id];
         if (abilityFn) {
-            abilityFn(this, targetPos);
+            const pos = this.selectedClass.id === 'GUERREIRO'
+                ? { x: this.player.x, y: this.player.y }
+                : targetPos;
+            abilityFn(this, pos);
         }
     }
 

@@ -281,16 +281,19 @@
 
                 // Atualiza arma visual
                 if (this.weaponSprite && this.player.active) {
-                    // Direção do ataque: joystick de ataque > movimento > cima
-                    let dir = null;
+                    // Direção do ataque: joystick de ataque > movimento > mantém última direção
+                    if (!this.lastAttackDirection) {
+                        this.lastAttackDirection = new Phaser.Math.Vector2(0, -1);
+                    }
+                    let dir = this.lastAttackDirection;
                     if (this.attackJoystick && this.attackJoystick.vector.length() > 0) {
                         dir = this.attackJoystick.vector.clone().normalize();
+                        this.lastAttackDirection = dir;
                     } else if (this.player.body.velocity.length() > 0) {
                         dir = this.player.body.velocity.clone().normalize();
-                    } else {
-                        dir = new Phaser.Math.Vector2(0, -1);
+                        this.lastAttackDirection = dir;
                     }
-                    // Posição a frente do player
+                    // Mantém a última direção se parado
                     const offset = 28;
                     this.weaponSprite.x = this.player.x + dir.x * offset;
                     this.weaponSprite.y = this.player.y + dir.y * offset;
@@ -428,9 +431,14 @@
                 if (this.time.now < lastAttack + cooldown) return;
                 this.player.setData('lastAttack', this.time.now);
 
-                // NOVO: Mantenha a direção do movimento conforme o ataque
-                const speed = this.selectedClass.velocidade;
-                this.player.body.setVelocity(attackDir.x * speed, attackDir.y * speed);
+                // Salva velocidade anterior
+                const prevVelocity = this.player.body.velocity.clone();
+
+                // Aplica velocidade do ataque apenas se parado
+                if (prevVelocity.length() === 0) {
+                    const speed = this.selectedClass.velocidade;
+                    this.player.body.setVelocity(attackDir.x * speed, attackDir.y * speed);
+                }
 
                 if (this.selectedClass.attackType === 'melee') {
                     const attackOffset = 40;
@@ -476,6 +484,11 @@
                     proj.setData({ damage: finalDamage, isCrit: isCrit });
                     proj.enableBody(true, this.player.x, this.player.y, true, true);
                     proj.setVelocity(attackDir.x * 400, attackDir.y * 400);
+                }
+
+                // Restaura velocidade anterior se estava se movendo
+                if (prevVelocity.length() > 0) {
+                    this.player.body.setVelocity(prevVelocity.x, prevVelocity.y);
                 }
             }
 

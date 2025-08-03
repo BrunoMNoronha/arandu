@@ -34,9 +34,10 @@ export default class UIScene extends Phaser.Scene {
         this.createAttributeLine(attrX, attrY, 'Dano:', this.playerData.damage, labelStyle, valueStyle); attrY += 30;
         this.createAttributeLine(attrX, attrY, 'Velocidade:', this.playerData.velocidade || this.classData.velocidade, labelStyle, valueStyle); attrY += 30;
         this.createAttributeLine(attrX, attrY, 'Cooldown Ataque:', (this.playerData.attackCooldown || this.classData.attackCooldown) + 'ms', labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Força:', this.playerData.strength ?? 0, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Agilidade:', this.playerData.agility ?? 0, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Inteligência:', this.playerData.intelligence ?? 0, labelStyle, valueStyle); attrY += 30;
+        const attrs = this.playerData.attributes || {};
+        this.createAttributeLine(attrX, attrY, 'Força:', attrs.FOR ?? 0, labelStyle, valueStyle); attrY += 30;
+        this.createAttributeLine(attrX, attrY, 'Agilidade:', attrs.AGI ?? 0, labelStyle, valueStyle); attrY += 30;
+        this.createAttributeLine(attrX, attrY, 'Inteligência:', attrs.INT ?? 0, labelStyle, valueStyle); attrY += 30;
         if (this.playerData.attributePoints !== undefined) {
             this.createAttributeLine(attrX, attrY, 'Pontos de Atributo:', this.playerData.attributePoints, labelStyle, valueStyle); attrY += 30;
         }

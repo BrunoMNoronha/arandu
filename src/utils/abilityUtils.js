@@ -6,7 +6,9 @@ export function useArrowRain(scene, targetPos) {
                 const angle = Phaser.Math.DegToRad(45 * a);
                 const proj = scene.playerAttacks.get(targetPos.x, targetPos.y, 'player-projectile-texture');
                 if (proj) {
+                    proj.enableBody(true, targetPos.x, targetPos.y, true, true);
                     proj.setActive(true).setVisible(true);
+                    proj.setData('damage', scene.player.getData('damage') * ability.damageMultiplier);
                     scene.physics.velocityFromRotation(angle, 350, proj.body.velocity);
                 }
             }

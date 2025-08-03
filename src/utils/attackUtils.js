@@ -77,7 +77,10 @@ export function fireAttack(scene, direction) {
                 isCrit = true;
             }
             console.log('[fireAttack] Guerreiro acertou inimigo:', closestEnemy.name || closestEnemy.id, 'Dano:', finalDamage, 'Crítico:', isCrit);
-            closestEnemy.takeDamage(finalDamage, isCrit);
+            const isDefeated = closestEnemy.takeDamage(finalDamage, isCrit);
+            if (isDefeated) {
+                defeatTarget(scene, closestEnemy);
+            }
         }
     } else {
         const proj = scene.playerAttacks.get(scene.player.x, scene.player.y);
@@ -186,6 +189,7 @@ export function defeatTarget(scene, target) {
 
     } else {
         console.log('[defeatTarget] Inimigo derrotado:', target.name || target.id);
+        target.die();
         scene.enemiesRemaining--;
         scene.updateWaveProgressText();
         scene.checkWaveCompletion();

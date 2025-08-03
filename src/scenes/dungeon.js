@@ -168,6 +168,7 @@ export default class DungeonScene extends Phaser.Scene {
         }
         handleControls(this);
         updateSpecialAbilityUI(this);
+        this.checkWaveCompletion();
     }
 
     onResize(gameSize) {
@@ -180,7 +181,7 @@ export default class DungeonScene extends Phaser.Scene {
     }
 
     updatePlayerHud() {
-        hudUpdate(this);
+        hudUpdate(this, this.player.data.getAll());
     }
 
     updateWaveProgressText() {
@@ -212,7 +213,7 @@ export default class DungeonScene extends Phaser.Scene {
     }
 
     checkWaveCompletion() {
-        if (this.waveState === 'IN_WAVE' && this.enemies.countActive(true) === 0) {
+        if (this.waveState === 'IN_WAVE' && this.enemiesRemaining === 0) {
             this.endWave();
         }
     }

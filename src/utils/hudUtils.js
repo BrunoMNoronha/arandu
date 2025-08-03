@@ -4,7 +4,8 @@ export function createHUD(scene) {
     scene.playerHudHpBar = scene.add.graphics();
     scene.playerHudXpBar = scene.add.graphics();
     scene.levelText = scene.add.text(10, 28, '', { fontSize:'20px', color:'#fff', stroke: '#000', strokeThickness: 4 });
-    scene.hudContainer.add([scene.playerHudHpBar, scene.playerHudXpBar, scene.levelText]);
+    scene.primaryAttrText = scene.add.text(10, 70, '', { fontSize:'18px', color:'#fff', stroke:'#000', strokeThickness:4 });
+    scene.hudContainer.add([scene.playerHudHpBar, scene.playerHudXpBar, scene.levelText, scene.primaryAttrText]);
     scene.waveProgressText = scene.add.text(scene.scale.width - 20, 20, '', { fontSize:'22px', color:'#fff', stroke:'#000', strokeThickness:4, align: 'right' }).setOrigin(1, 0).setDepth(20);
     scene.profileButton = scene.add.image(scene.scale.width - 40, 40, 'profile-icon').setInteractive({ useHandCursor: true }).setDepth(21).setScale(0.8);
     scene.profileButton.on('pointerdown', () => {
@@ -16,16 +17,25 @@ export function createHUD(scene) {
     scene.specialAbilityButton = scene.add.image(0, 0, abilityData.icon).setInteractive({ useHandCursor: true }).setDepth(21).setScale(1.2);
     scene.specialAbilityButton.on('pointerdown', () => scene.tryUseSpecialAbility());
     scene.specialAbilityCooldownText = scene.add.text(0, 0, '', { fontSize: '24px', color: '#ffffff', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setDepth(22);
-    updatePlayerHud(scene);
+    updatePlayerHud(scene, scene.player.data.getAll());
     repositionHUD(scene, scene.scale.width, scene.scale.height);
 }
 
-export function updatePlayerHud(scene) {
-    const hp = Math.max(0, scene.player.getData('hp') / scene.player.getData('maxHp'));
+export function updatePlayerHud(scene, playerData = {}) {
+    const hp = Math.max(0, playerData.hp / playerData.maxHp);
     scene.playerHudHpBar.clear().fillStyle(0x000, 0.5).fillRoundedRect(0, 0, 204, 24, 5).fillStyle(0x00ff00).fillRoundedRect(2, 2, 200 * hp, 20, 4);
-    const xp = scene.player.getData('xp') / scene.player.getData('xpToNextLevel');
+    const xp = playerData.xp / playerData.xpToNextLevel;
     scene.playerHudXpBar.clear().fillStyle(0x000, 0.5).fillRoundedRect(0, 50, 204, 14, 5).fillStyle(0x8a2be2).fillRoundedRect(2, 52, 200 * xp, 10, 4);
-    scene.levelText.setText(`Nível: ${scene.player.getData('level')}`);
+    scene.levelText.setText(`Nível: ${playerData.level}`);
+
+    const str = playerData.strength ?? 0;
+    const agi = playerData.agility ?? 0;
+    const int = playerData.intelligence ?? 0;
+    let attrTxt = `FOR:${str} AGI:${agi} INT:${int}`;
+    if (playerData.attributePoints !== undefined) {
+        attrTxt += ` | Pts:${playerData.attributePoints}`;
+    }
+    scene.primaryAttrText.setText(attrTxt);
 }
 
 export function updateWaveProgressText(scene) {

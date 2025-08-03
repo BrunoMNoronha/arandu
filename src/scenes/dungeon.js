@@ -180,7 +180,7 @@ export default class DungeonScene extends Phaser.Scene {
     }
 
     updatePlayerHud() {
-        hudUpdate(this);
+        hudUpdate(this, this.player.data.getAll());
     }
 
     updateWaveProgressText() {

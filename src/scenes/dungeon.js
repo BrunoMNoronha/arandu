@@ -157,9 +157,6 @@ export default class DungeonScene extends Phaser.Scene {
             return;
         }
         handleControls(this);
-        this.enemies.children.iterate(enemy => {
-            if (enemy && enemy.active) enemy.update(time, delta);
-        });
         updateSpecialAbilityUI(this);
     }
 

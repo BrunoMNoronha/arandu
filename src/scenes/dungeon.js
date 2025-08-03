@@ -6,7 +6,14 @@ import { GameData, WaveConfig } from '../data/data.js';
 import Enemy from '../classes/enemy.js';
 import Player from '../classes/player.js';
 import Joystick from '../classes/joystick.js';
-import { createHUD, updatePlayerHud, updateWaveProgressText, showFloatingText, repositionHUD, updateSpecialAbilityUI } from '../utils/hudUtils.js';
+import {
+    createHUD,
+    updatePlayerHud as hudUpdate,
+    updateWaveProgressText as waveTextUpdate,
+    showFloatingText as floatingTextShow,
+    repositionHUD,
+    updateSpecialAbilityUI
+} from '../utils/hudUtils.js';
 import { handleControls } from '../utils/controlUtils.js';
 import { fireAttack, enemyFireAttack, projectileHitEnemy, projectileHitPlayer, playerHitEnemy } from '../utils/attackUtils.js';
 import { generatePlayerTexture, generateTatuZumbiTexture, generateAranhaDeDardoTexture, generateBossJiboiaTexture, generateWeaponTexture, generateProjectileTextures, generateIcons } from '../utils/assetUtils.js';
@@ -176,15 +183,15 @@ export default class DungeonScene extends Phaser.Scene {
     }
 
     updatePlayerHud() {
-        updatePlayerHud(this);
+        hudUpdate(this);
     }
 
     updateWaveProgressText() {
-        updateWaveProgressText(this);
+        waveTextUpdate(this);
     }
 
     showFloatingText(txt, x, y, isCrit = false, color = '#ffdddd') {
-        showFloatingText(this, txt, x, y, isCrit, color);
+        floatingTextShow(this, txt, x, y, isCrit, color);
     }
 
     setupWaveSystem() {

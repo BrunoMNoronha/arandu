@@ -89,13 +89,22 @@ export function updateSpecialAbilityUI(scene) {
 }
 
 export function repositionHUD(scene, width, height) {
-    if (scene.hudContainer) scene.hudContainer.setPosition(20, 20);
-    if (scene.waveProgressText) scene.waveProgressText.setPosition(width - 20, 20);
-    if (scene.profileButton) scene.profileButton.setPosition(width - 40, 40);
-    if (scene.pauseButton) scene.pauseButton.setPosition(width - 40, 90);
+    const margin = 20;
+    const isLandscape = width > height;
+
+    if (scene.hudContainer) scene.hudContainer.setPosition(margin, margin);
+    if (scene.waveProgressText) scene.waveProgressText.setPosition(width - margin, margin);
+    if (scene.profileButton) scene.profileButton.setPosition(width - margin - 20, margin + 20);
+    if (scene.pauseButton) scene.pauseButton.setPosition(width - margin - 20, margin + 70);
     if (scene.specialAbilityButton) {
-        const yPos = scene.attackJoystick.base.y || height - 80;
-        scene.specialAbilityButton.setPosition(width - 80, yPos - 80);
+        let yPos = height - margin - 60;
+        if (scene.attackJoystick && scene.attackJoystick.base.visible) {
+            yPos = Math.min(yPos, scene.attackJoystick.base.y - margin);
+        }
+        if (!isLandscape) {
+            yPos = Math.min(yPos, height - margin - 120);
+        }
+        scene.specialAbilityButton.setPosition(width - margin - 60, yPos);
         scene.specialAbilityCooldownText.setPosition(scene.specialAbilityButton.x, scene.specialAbilityButton.y);
     }
     if (scene.waveInfoText) scene.waveInfoText.setPosition(width / 2, height / 2 - 50);

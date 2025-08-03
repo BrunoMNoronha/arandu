@@ -18,14 +18,23 @@
             },
             Enemies: {
                 TATU_ZUMBI: { id: 'TATU_ZUMBI', nome: 'Tatu Zumbi', texture: 'enemy-texture', cor: 0x7f8c8d, velocidade: 60, vida: 80, dano: 10, xp: 50, ai: 'melee', cost: 1 },
-                ARANHA_DE_DARDO: { id: 'ARANHA_DE_DARDO', nome: 'Aranha de Dardo', texture: 'enemy-spider-texture', cor: 0x3498db, velocidade: 80, vida: 60, dano: 15, xp: 75, ai: 'ranged', attackDelay: 2000, attackRange: 350, cost: 2 }
+                ARANHA_DE_DARDO: { id: 'ARANHA_DE_DARDO', nome: 'Aranha de Dardo', texture: 'enemy-spider-texture', cor: 0x3498db, velocidade: 80, vida: 60, dano: 15, xp: 75, ai: 'ranged', attackDelay: 2000, attackRange: 350, cost: 2 },
+                BOSS_JIBOIA: { id: 'BOSS_JIBOIA', nome: 'Jiboia Ancestral', texture: 'boss-jiboia-texture', cor: 0x229954, velocidade: 50, vida: 800, dano: 40, xp: 500, ai: 'melee', boss: true }
             }
         };
 
         const WaveConfig = {
             definitions: [
-                { TATU_ZUMBI: 5 }, { TATU_ZUMBI: 8 }, { TATU_ZUMBI: 5, ARANHA_DE_DARDO: 3 }, { ARANHA_DE_DARDO: 7 }, { TATU_ZUMBI: 12 },
-                { TATU_ZUMBI: 8, ARANHA_DE_DARDO: 6 }, { ARANHA_DE_DARDO: 10 }, { TATU_ZUMBI: 15, ARANHA_DE_DARDO: 5 }, { ARANHA_DE_DARDO: 15 }, { TATU_ZUMBI: 10, ARANHA_DE_DARDO: 10 }
+                { TATU_ZUMBI: 5 },
+                { TATU_ZUMBI: 8 },
+                { TATU_ZUMBI: 5, ARANHA_DE_DARDO: 3 },
+                { ARANHA_DE_DARDO: 7 },
+                { TATU_ZUMBI: 8, ARANHA_DE_DARDO: 4, BOSS_JIBOIA: 1 }, // Quinta wave com boss
+                { TATU_ZUMBI: 8, ARANHA_DE_DARDO: 6 },
+                { ARANHA_DE_DARDO: 10 },
+                { TATU_ZUMBI: 15, ARANHA_DE_DARDO: 5 },
+                { ARANHA_DE_DARDO: 15 },
+                { TATU_ZUMBI: 10, ARANHA_DE_DARDO: 10 }
             ],
             spawnInterval: 350, initialWaveDelay: 1000, betweenWavesDelay: 5000, proceduralBasePoints: 12, proceduralPointGrowth: 3
         };
@@ -206,6 +215,19 @@
                 // Olhos
                 sGfx.fillStyle(0xffffff,1).fillCircle(16,8,1.5).fillCircle(20,8,1.5);
                 sGfx.generateTexture(GameData.Enemies.ARANHA_DE_DARDO.texture,36,40).destroy();
+
+                // Boss Jiboia: corpo longo, olhos, padrão de escamas
+                const bGfx = this.make.graphics({add:false});
+                bGfx.fillStyle(GameData.Enemies.BOSS_JIBOIA.cor,1);
+                bGfx.fillEllipse(40,40,70,30); // corpo principal
+                bGfx.fillEllipse(90,40,30,22); // cabeça
+                bGfx.fillStyle(0x145a32,1);
+                for(let i=0;i<6;i++){
+                    bGfx.fillEllipse(30+i*10,40,12,8); // escamas
+                }
+                bGfx.fillStyle(0xff3333,1).fillCircle(98,36,4).fillCircle(98,44,4); // olhos
+                bGfx.lineStyle(4,0xffffff,0.7).strokeEllipse(40,40,70,30);
+                bGfx.generateTexture(GameData.Enemies.BOSS_JIBOIA.texture,120,80).destroy();
 
                 // Projetéis e ícones
                 const prGfx=this.make.graphics({add:false}); prGfx.fillStyle(0xffff00,1).fillCircle(5,5,5); prGfx.generateTexture('player-projectile-texture',10,10).destroy();

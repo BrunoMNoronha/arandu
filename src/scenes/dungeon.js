@@ -53,6 +53,10 @@ export default class DungeonScene extends Phaser.Scene {
 
     create() {
         this.input.addPointer(1);
+
+        // Tecla para abrir o menu de pausa
+        this.input.keyboard.on('keydown-ESC', () => this.pauseMenu());
+
         // Desktop: auto ataque com espaço
         if (!this.sys.game.device.input.touch) {
             this.spaceAttackInterval = null;

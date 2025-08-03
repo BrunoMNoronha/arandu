@@ -27,6 +27,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             level: 1,
             xp: 0,
             xpToNextLevel: 100,
+            attributePoints: 0,
             attributes: { ...this.selectedClass.baseAttributes },
             maxHp: 0,
             hp: 0,
@@ -104,7 +105,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     levelUp() {
-        const newLvl = this.getData('level') + 1;
         const newMaxHp = Math.floor(this.getData('maxHp') * 1.15);
         const newDmg = Math.floor(this.getData('damage') * 1.1);
         const newXpToNext = Math.floor(this.getData('xpToNextLevel') * 1.5);
@@ -121,7 +121,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.recomputeStats();
 
         // Aplica o aumento de nível e atributos calculados
-        this.setData('level', newLvl);
+        this.setData('level', this.getData('level') + 1);
+        this.setData('attributePoints', this.getData('attributePoints') + 1);
         this.setData('maxHp', newMaxHp);
         this.setData('damage', newDmg);
         this.setData('hp', newMaxHp); // Cura total ao subir de nível

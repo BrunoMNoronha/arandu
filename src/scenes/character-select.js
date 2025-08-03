@@ -22,14 +22,20 @@ export default class CharacterSelectScene extends Phaser.Scene {
         this.createClassButton(width/2, height * 0.65, GameData.Classes.GUERREIRO);
     }
     createClassButton(x,y,classData) {
+        const isMobile = this.sys.game.device.os.android || this.sys.game.device.os.iOS;
         const w = this.scale.width * 0.8;
-        const h = 120;
+        const h = isMobile ? 140 : 120; // Altura maior no mobile
+        const titleSize = isMobile ? '26px' : '32px';
+        const descSize = isMobile ? '18px' : '20px';
+
         const btn = this.add.container(x, y);
         const bg = this.add.graphics();
         bg.fillStyle(0x000000, 0.5).fillRoundedRect(-w/2, -h/2, w, h, 16);
         bg.lineStyle(3, classData.cor, 0.8).strokeRoundedRect(-w/2, -h/2, w, h, 16);
-        const title = this.add.text(-w/2+30, -h/2 + 25, classData.nome, {fontSize:'32px',color:'#fff',fontStyle:'bold'});
-        const desc = this.add.text(-w/2+30, -h/2 + 65, classData.desc, {fontSize:'20px',color:'#ccc', wordWrap: { width: w - 60 }});
+        
+        const title = this.add.text(-w/2+30, -h/2 + 20, classData.nome, {fontSize: titleSize, color:'#fff', fontStyle:'bold'});
+        const desc = this.add.text(-w/2+30, -h/2 + 60, classData.desc, {fontSize: descSize, color:'#ccc', wordWrap: { width: w - 60 }});
+        
         btn.add([bg, title, desc]).setSize(w, h).setInteractive({useHandCursor:true});
         btn.on('pointerover', () => {
             bg.clear();

@@ -4,6 +4,7 @@
 
 import { GameData, WaveConfig } from '../data/data.js';
 import Enemy from '../classes/enemy.js';
+import Player from '../classes/player.js';
 import Joystick from '../classes/joystick.js';
 import { createHUD, updatePlayerHud, updateWaveProgressText, showFloatingText, repositionHUD, updateSpecialAbilityUI } from '../utils/hudUtils.js';
 import { handleControls } from '../utils/controlUtils.js';
@@ -75,13 +76,7 @@ export default class DungeonScene extends Phaser.Scene {
         this.cameras.main.fadeIn(500, 0, 0, 0);
         this.background = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x1a2b1a).setOrigin(0).setDepth(-1);
 
-        this.player = this.physics.add.sprite(this.scale.width/2, this.scale.height/2, 'player-texture').setCollideWorldBounds(true);
-        this.player.setData({
-            level: 1, xp: 0, xpToNextLevel: 100,
-            maxHp: this.selectedClass.vida, hp: this.selectedClass.vida,
-            damage: this.selectedClass.dano, isInvulnerable: false,
-            lastAttack: 0, lastSpecialAttack: -Infinity
-        });
+        this.player = new Player(this, this.scale.width / 2, this.scale.height / 2, 'player-texture', this.selectedClass);
 
         // --- ARMA VISUAL ---
         const armaKey = this.selectedClass.id === 'CACADOR' ? 'zarabatana' : 'machado';
@@ -139,14 +134,17 @@ export default class DungeonScene extends Phaser.Scene {
             const pointer = this.input.activePointer;
             this.abilityTargetMarker.setPosition(pointer.worldX, pointer.worldY);
         }
+
+        this.player.update(time, delta, this.cursors, this.moveJoystick, this.attackJoystick);
+
         if (this.weaponSprite && this.player.active) {
-            let dir = this.lastAttackDirection;
+            let dir = this.player.lastAttackDirection;
             if (this.attackJoystick && this.attackJoystick.vector.length() > 0) {
                 dir = this.attackJoystick.vector.clone().normalize();
-                this.lastAttackDirection = dir;
+                this.player.lastAttackDirection = dir;
             } else if (this.player.body.velocity.length() > 0) {
                 dir = this.player.body.velocity.clone().normalize();
-                this.lastAttackDirection = dir;
+                this.player.lastAttackDirection = dir;
             }
             const offset = 28;
             this.weaponSprite.x = this.player.x + dir.x * offset;

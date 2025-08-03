@@ -28,9 +28,10 @@ export function updatePlayerHud(scene, playerData = {}) {
     scene.playerHudXpBar.clear().fillStyle(0x000, 0.5).fillRoundedRect(0, 50, 204, 14, 5).fillStyle(0x8a2be2).fillRoundedRect(2, 52, 200 * xp, 10, 4);
     scene.levelText.setText(`Nível: ${playerData.level}`);
 
-    const str = playerData.strength ?? 0;
-    const agi = playerData.agility ?? 0;
-    const int = playerData.intelligence ?? 0;
+    const attrs = playerData.attributes || {};
+    const str = attrs.FOR ?? 0;
+    const agi = attrs.AGI ?? 0;
+    const int = attrs.INT ?? 0;
     let attrTxt = `FOR:${str} AGI:${agi} INT:${int}`;
     if (playerData.attributePoints !== undefined) {
         attrTxt += ` | Pts:${playerData.attributePoints}`;

@@ -318,6 +318,10 @@ export default class DungeonScene extends Phaser.Scene {
         this.pausePanel = this.add.graphics().fillStyle(0x222222, 0.85).fillRoundedRect(width/2-180, height/2-120, 360, 240, 24).setDepth(50);
         this.pauseText = this.add.text(width/2, height/2-60, 'Jogo Pausado', { fontSize: '36px', color: '#fff', fontFamily: 'Georgia, serif', stroke:'#00ff7f', strokeThickness:4 }).setOrigin(0.5).setDepth(51);
         this.resumeButton = this.add.text(width/2, height/2+40, 'Continuar', { fontSize: '28px', color: '#00ff7f', backgroundColor:'#333', fontFamily: 'Georgia, serif', padding:{top:8,bottom:8,left:20,right:20}, stroke:'#000', strokeThickness:3 }).setOrigin(0.5).setDepth(51).setInteractive({useHandCursor:true});
+
+        // Pausa a cena para interromper a atualização do jogo enquanto o menu estiver ativo
+        this.scene.pause();
+
         this.resumeButton.on('pointerdown', () => {
             this.pausePanel.destroy();
             this.pauseText.destroy();
@@ -325,6 +329,10 @@ export default class DungeonScene extends Phaser.Scene {
             this.pausePanel = null;
             this.scene.resume();
         });
+
+        // Garante que o botão continue recebendo eventos mesmo com a cena pausada
+        this.input.enable(this.resumeButton);
+
         this.input.keyboard.once('keydown-ESC', () => {
             if (this.pausePanel) {
                 this.pausePanel.destroy();

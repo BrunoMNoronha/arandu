@@ -161,3 +161,8 @@ export function defeatTarget(scene, target) {
         scene.checkWaveCompletion();
     }
 }
+
+export function gainXP(scene, amount) {
+    scene.player.gainXP(amount);
+    scene.showFloatingText(`+${amount} XP`, scene.player.x, scene.player.y - 40, false, '#00ff7f');
+}

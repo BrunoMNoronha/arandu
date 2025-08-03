@@ -14,17 +14,25 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.selectedClass = selectedClass;
         this.lastAttackDirection = new Phaser.Math.Vector2(0, -1);
 
+        // Atributos base do jogador, utilizados para recalcular os demais
+        // status sempre que houver um level up.
+        this.baseStats = {
+            vida: selectedClass.vida,
+            dano: selectedClass.dano,
+            defesa: selectedClass.defesa || 0
+        };
+
         this.setData({
             level: 1,
             xp: 0,
             xpToNextLevel: 100,
-            maxHp: this.selectedClass.vida,
-            hp: this.selectedClass.vida,
-            damage: this.selectedClass.dano,
             isInvulnerable: false,
             lastAttack: 0,
             lastSpecialAttack: -Infinity
         });
+
+        // Calcula HP, dano e outros atributos derivados dos primários
+        this.recomputeStats();
 
         this.setCollideWorldBounds(true);
     }
@@ -84,15 +92,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const newDmg = Math.floor(this.getData('damage') * 1.1);
         const newXpToNext = Math.floor(this.getData('xpToNextLevel') * 1.5);
 
-        this.setData({
-            level: newLvl,
-            maxHp: newMaxHp,
-            hp: newMaxHp,
-            damage: newDmg,
-            xpToNextLevel: newXpToNext
-        });
 
+        // Incrementa os atributos primários de acordo com o crescimento da classe
+        const growth = this.selectedClass.growth || {};
+        for (const [key, value] of Object.entries(growth)) {
+            this.baseStats[key] = (this.baseStats[key] || 0) + value;
+        }
+
+        // Recalcula HP, dano e outros atributos derivados
+        this.recomputeStats();
+        this.setData('xpToNextLevel', Math.floor(this.getData('xpToNextLevel') * 1.5));
         this.scene.showFloatingText('LEVEL UP!', this.x, this.y, false, '#ffff00');
+    }
+
+    // Atualiza os status derivados (HP, dano, defesa...) com base nos atributos primários
+    recomputeStats() {
+        const { vida = 0, dano = 0, defesa = 0 } = this.baseStats;
+        this.setData('maxHp', vida);
+        this.setData('hp', vida);
+        this.setData('damage', dano);
+        this.setData('defense', defesa);
     }
 
     die() {

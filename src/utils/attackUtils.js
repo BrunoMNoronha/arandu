@@ -1,35 +1,66 @@
 // Funções utilitárias de ataque e XP
 export function fireAttack(scene, direction) {
-    let attackDir = direction;
-    if (!attackDir || (attackDir.x === 0 && attackDir.y === 0)) {
+    // Lógica robusta para determinar a direção do ataque
+    let attackDir = new Phaser.Math.Vector2(); // Começa com um vetor vazio para garantir o tipo
+
+    // Prioridade 1: Usar a direção explícita (joystick/teclado) se estiver ativa
+    if (direction && (direction.x !== 0 || direction.y !== 0)) {
+        attackDir.set(direction.x, direction.y).normalize();
+    } 
+    // Prioridade 2: Se não, usar a velocidade atual do jogador
+    else {
         const vel = scene.player.body.velocity;
-        attackDir = vel.length() > 0 ? vel.clone().normalize() : new Phaser.Math.Vector2(0, -1);
+        if (vel.length() > 0) {
+            attackDir.set(vel.x, vel.y).normalize();
+        } 
+        // Prioridade 3: Como último recurso, usar uma direção padrão (para cima)
+        else {
+            attackDir.set(0, -1);
+        }
     }
     const cooldown = scene.player.getData('attackCooldown');
     const lastAttack = scene.player.getData('lastAttack');
     if (scene.time.now < lastAttack + cooldown) return;
     scene.player.setData('lastAttack', scene.time.now);
-    const prevVelocity = scene.player.body.velocity.clone();
-    if (prevVelocity.length() === 0) {
-        const speed = scene.player.getData('speed');
-        scene.player.body.setVelocity(attackDir.x * speed, attackDir.y * speed);
-    }
+
     if (scene.selectedClass.attackType === 'melee') {
-        const attackOffset = 40;
-        const attackPosition = new Phaser.Math.Vector2(scene.player.x, scene.player.y).add(attackDir.clone().scale(attackOffset));
-        const slashGfx = scene.add.graphics({ lineStyle: { width: 4, color: 0xffffff, alpha: 0.8 } });
+        const range = scene.selectedClass.attackRange;
         const angle = attackDir.angle();
-        slashGfx.slice(attackPosition.x, attackPosition.y, scene.selectedClass.attackRange * 0.7, angle - Math.PI / 4, angle + Math.PI / 4, false);
-        slashGfx.strokePath();
-        scene.tweens.add({ targets: slashGfx, alpha: 0, duration: 150, onComplete: () => slashGfx.destroy() });
-        const attackRange = scene.selectedClass.attackRange;
-        const attackArea = new Phaser.Geom.Circle(attackPosition.x, attackPosition.y, attackRange);
-        const enemiesToCheck = scene.enemies.getMatching('active', true);
+        const coneAngle = Phaser.Math.DegToRad(90); // Abertura do cone de 90 graus
+
+        // Vértices do cone
+        const p1 = { x: scene.player.x, y: scene.player.y };
+        const p2 = { 
+            x: scene.player.x + range * Math.cos(angle - coneAngle / 2),
+            y: scene.player.y + range * Math.sin(angle - coneAngle / 2)
+        };
+        const p3 = { 
+            x: scene.player.x + range * Math.cos(angle + coneAngle / 2),
+            y: scene.player.y + range * Math.sin(angle + coneAngle / 2)
+        };
+
+        const attackCone = new Phaser.Geom.Polygon([
+            p1.x, p1.y,
+            p2.x, p2.y,
+            p3.x, p3.y
+        ]);
+
+        // Efeito visual do cone
+        const graphics = scene.add.graphics();
+        graphics.lineStyle(2, 0xffffff, 0.8);
+        graphics.strokePoints(attackCone.points, true);
+        scene.tweens.add({
+            targets: graphics,
+            alpha: 0,
+            duration: 250,
+            onComplete: () => graphics.destroy()
+        });
+
         let closestEnemy = null;
         let minDistance = Infinity;
-        enemiesToCheck.forEach(enemy => {
-            const enemyBounds = enemy.getBounds();
-            if (Phaser.Geom.Intersects.CircleToRectangle(attackArea, enemyBounds)) {
+
+        scene.enemies.getChildren().forEach(enemy => {
+            if (enemy.active && Phaser.Geom.Polygon.Contains(attackCone, enemy.x, enemy.y)) {
                 const distance = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, enemy.x, enemy.y);
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -37,6 +68,7 @@ export function fireAttack(scene, direction) {
                 }
             }
         });
+
         if (closestEnemy) {
             let finalDamage = scene.player.getData('damage');
             let isCrit = false;
@@ -44,6 +76,7 @@ export function fireAttack(scene, direction) {
                 finalDamage *= scene.selectedClass.critMultiplier;
                 isCrit = true;
             }
+            console.log('[fireAttack] Guerreiro acertou inimigo:', closestEnemy.name || closestEnemy.id, 'Dano:', finalDamage, 'Crítico:', isCrit);
             closestEnemy.takeDamage(finalDamage, isCrit);
         }
     } else {
@@ -58,9 +91,6 @@ export function fireAttack(scene, direction) {
         proj.setData({ damage: finalDamage, isCrit: isCrit });
         proj.enableBody(true, scene.player.x, scene.player.y, true, true);
         proj.setVelocity(attackDir.x * 400, attackDir.y * 400);
-    }
-    if (prevVelocity.length() > 0) {
-        scene.player.body.setVelocity(prevVelocity.x, prevVelocity.y);
     }
 }
 
@@ -155,7 +185,7 @@ export function defeatTarget(scene, target) {
         scene.input.enable(restartButton);
 
     } else {
-        target.die();
+        console.log('[defeatTarget] Inimigo derrotado:', target.name || target.id);
         scene.enemiesRemaining--;
         scene.updateWaveProgressText();
         scene.checkWaveCompletion();

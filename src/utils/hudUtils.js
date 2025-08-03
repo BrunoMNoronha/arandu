@@ -12,6 +12,15 @@ export function createHUD(scene) {
         scene.scene.pause();
         scene.scene.launch('UIScene', { playerData: scene.player.data.getAll(), classData: scene.selectedClass });
     });
+
+    // Botão de pausa
+    scene.pauseButton = scene.add.text(scene.scale.width - 40, 90, 'II', {
+        fontSize: '28px',
+        color: '#ffffff',
+        backgroundColor: '#333333',
+        padding: { top: 4, bottom: 4, left: 6, right: 6 }
+    }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
+    scene.pauseButton.on('pointerdown', () => scene.pauseMenu());
     // Botão de habilidade especial
     const abilityData = scene.selectedClass.ability;
     scene.specialAbilityButton = scene.add.image(0, 0, abilityData.icon).setInteractive({ useHandCursor: true }).setDepth(21).setScale(1.2);
@@ -81,6 +90,7 @@ export function repositionHUD(scene, width, height) {
     if (scene.hudContainer) scene.hudContainer.setPosition(20, 20);
     if (scene.waveProgressText) scene.waveProgressText.setPosition(width - 20, 20);
     if (scene.profileButton) scene.profileButton.setPosition(width - 40, 40);
+    if (scene.pauseButton) scene.pauseButton.setPosition(width - 40, 90);
     if (scene.specialAbilityButton) {
         const yPos = scene.attackJoystick.base.y || height - 80;
         scene.specialAbilityButton.setPosition(width - 80, yPos - 80);

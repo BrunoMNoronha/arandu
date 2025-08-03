@@ -17,6 +17,21 @@ export function handleControls(scene) {
     }
 }
 
+export function startJoystickAutoAttack(scene) {
+    if (!scene.joystickAttackInterval) {
+        let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
+        scene.fireAttack(dir);
+        scene.joystickAttackInterval = scene.time.addEvent({
+            delay: scene.selectedClass.attackCooldown,
+            loop: true,
+            callback: () => {
+                let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
+                scene.fireAttack(dir);
+            }
+        });
+    }
+}
+
 export function handleTouch(scene) {
     for (const ptr of scene.input.manager.pointers) {
         if (ptr.isDown) {
@@ -34,28 +49,11 @@ export function handleTouch(scene) {
                 scene.moveJoystick.activate(ptr);
             } else if (isAttackZone && !scene.attackJoystick.pointer) {
                 scene.attackJoystick.activate(ptr);
-                if (!scene.joystickAttackInterval) {
-                    let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
-                    scene.fireAttack(dir);
-                    scene.joystickAttackInterval = scene.time.addEvent({
-                        delay: scene.selectedClass.attackCooldown,
-                        loop: true,
-                        callback: () => {
-                            let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
-                            scene.fireAttack(dir);
-                        }
-                    });
-                }
+                startJoystickAutoAttack(scene);
             }
         } else {
             if (scene.moveJoystick.pointer === ptr) scene.moveJoystick.deactivate();
-            if (scene.attackJoystick.pointer === ptr) {
-                scene.attackJoystick.deactivate();
-                if (scene.joystickAttackInterval) {
-                    scene.joystickAttackInterval.remove();
-                    scene.joystickAttackInterval = null;
-                }
-            }
+            if (scene.attackJoystick.pointer === ptr) scene.attackJoystick.deactivate();
         }
     }
 }

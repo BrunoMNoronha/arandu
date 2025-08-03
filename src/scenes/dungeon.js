@@ -138,6 +138,9 @@ export default class DungeonScene extends Phaser.Scene {
         createHUD(this);
         this.setupWaveSystem();
         this.scale.on('resize', this.onResize, this);
+        this.scale.on('orientationchange', () => {
+            this.onResize({ width: this.scale.width, height: this.scale.height });
+        }, this);
         this.isLandscape = this.scale.width > this.scale.height;
     }
 

@@ -65,7 +65,7 @@ export default class DungeonScene extends Phaser.Scene {
                     let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);
                     fireAttack(this, dir);
                     this.spaceAttackInterval = this.time.addEvent({
-                        delay: this.selectedClass.attackCooldown,
+                        delay: this.player.getData('attackCooldown'),
                         loop: true,
                         callback: () => {
                             let dir = this.lastAttackDirection || new Phaser.Math.Vector2(0, -1);

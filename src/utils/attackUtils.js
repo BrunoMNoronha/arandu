@@ -5,13 +5,13 @@ export function fireAttack(scene, direction) {
         const vel = scene.player.body.velocity;
         attackDir = vel.length() > 0 ? vel.clone().normalize() : new Phaser.Math.Vector2(0, -1);
     }
-    const cooldown = scene.selectedClass.attackCooldown;
+    const cooldown = scene.player.getData('attackCooldown');
     const lastAttack = scene.player.getData('lastAttack');
     if (scene.time.now < lastAttack + cooldown) return;
     scene.player.setData('lastAttack', scene.time.now);
     const prevVelocity = scene.player.body.velocity.clone();
     if (prevVelocity.length() === 0) {
-        const speed = scene.selectedClass.velocidade;
+        const speed = scene.player.getData('speed');
         scene.player.body.setVelocity(attackDir.x * speed, attackDir.y * speed);
     }
     if (scene.selectedClass.attackType === 'melee') {

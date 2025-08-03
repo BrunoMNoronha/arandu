@@ -8,7 +8,7 @@ import Player from '../classes/player.js';
 import Joystick from '../classes/joystick.js';
 import { createHUD, updatePlayerHud, updateWaveProgressText, showFloatingText, repositionHUD, updateSpecialAbilityUI } from '../utils/hudUtils.js';
 import { handleControls } from '../utils/controlUtils.js';
-import { fireAttack, projectileHitEnemy, projectileHitPlayer, playerHitEnemy } from '../utils/attackUtils.js';
+import { fireAttack, enemyFireAttack, projectileHitEnemy, projectileHitPlayer, playerHitEnemy } from '../utils/attackUtils.js';
 import { generatePlayerTexture, generateTatuZumbiTexture, generateAranhaDeDardoTexture, generateBossJiboiaTexture, generateWeaponTexture, generateProjectileTextures, generateIcons } from '../utils/assetUtils.js';
 import { useArrowRain, useShockwave } from '../utils/abilityUtils.js';
 
@@ -98,6 +98,9 @@ export default class DungeonScene extends Phaser.Scene {
 
         this.physics.add.overlap(this.playerAttacks, this.enemies, (proj, enemy) => projectileHitEnemy(this, proj, enemy), null, this);
         this.physics.add.overlap(this.player, this.enemyAttacks, (player, proj) => projectileHitPlayer(this, player, proj), null, this);
+
+        this.fireAttack = (dir) => fireAttack(this, dir);
+        this.enemyFireAttack = (enemy) => enemyFireAttack(this, enemy);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.moveJoystick = new Joystick(this);

@@ -2,7 +2,7 @@
 // Classe Enemy para inimigos do jogo
 // Dependências: Phaser
 
-import { gainXP, defeatTarget } from '../utils/attackUtils.js';
+import { defeatTarget } from '../utils/attackUtils.js';
 
 // --- Classe Enemy ---
 // Representa inimigos do jogo, com barra de vida e IA
@@ -75,15 +75,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
     }
     takeDamage(amount, isCrit = false) {
-        if (!this.active || this.getData('isDying')) return;
+        if (!this.active || this.getData('isDying')) return false;
+
         const newHp = this.getData('hp') - amount;
         this.setData('hp', newHp);
         this.scene.showFloatingText(Math.round(amount), this.x, this.y, isCrit);
         this.updateHealthBar();
+
         if (newHp <= 0) {
             this.setData('isDying', true);
-            defeatTarget(this.scene, this);
+            return true; // Inimigo foi derrotado
         }
+        return false; // Inimigo ainda está vivo
     }
     updateHealthBar() {
         if (!this.healthBar || !this.active) return;
@@ -92,7 +95,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.healthBar.clear().fillStyle(0x000000, 0.7).fillRoundedRect(0, 0, 32, 8, 3).fillStyle(0xff0000).fillRoundedRect(1, 1, 30 * pct, 6, 2);
     }
     die() {
-        gainXP(this.scene, this.stats.xp);
+        this.scene.player.gainXP(this.stats.xp);
         if (this.healthBar) {
             this.healthBar.setActive(false).setVisible(false);
         }

@@ -38,12 +38,18 @@ export function fireAttack(scene, direction) {
             }
         });
         if (closestEnemy) {
-            closestEnemy.takeDamage(scene.player.getData('damage'));
+            let finalDamage = scene.player.getData('damage');
+            let isCrit = false;
+            if (Math.random() < scene.selectedClass.critChance) {
+                finalDamage *= scene.selectedClass.critMultiplier;
+                isCrit = true;
+            }
+            closestEnemy.takeDamage(finalDamage, isCrit);
         }
     } else {
         const proj = scene.playerAttacks.get(scene.player.x, scene.player.y);
         if (!proj) return;
-        let finalDamage = scene.player.getData('damage');
+        let finalDamage = scene.player.getData('damage'); // Usar o dano atual do jogador
         let isCrit = false;
         if (Math.random() < scene.selectedClass.critChance) {
             finalDamage *= scene.selectedClass.critMultiplier;
@@ -70,7 +76,12 @@ export function enemyFireAttack(scene, enemy) {
 
 export function projectileHitEnemy(scene, proj, enemy) {
     if (enemy.active) {
-        enemy.takeDamage(proj.getData('damage') || 0, proj.getData('isCrit') || false);
+        const damage = proj.getData('damage') || 0;
+        const isCrit = proj.getData('isCrit') || false;
+        const isDefeated = enemy.takeDamage(damage, isCrit);
+        if (isDefeated) {
+            defeatTarget(scene, enemy);
+        }
     }
     proj.disableBody(true, true);
 }
@@ -155,4 +166,3 @@ export function gainXP(scene, amount) {
     scene.player.gainXP(amount);
     scene.showFloatingText(`+${amount} XP`, scene.player.x, scene.player.y - 40, false, '#00ff7f');
 }
-

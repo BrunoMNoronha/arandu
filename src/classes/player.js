@@ -61,7 +61,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.scene.tweens.add({
                 targets: this,
                 alpha: 0.5,
-                duration: 100,
+                duration: 50,
                 ease: 'Linear',
                 yoyo: true,
                 repeat: 5,
@@ -74,22 +74,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     gainXP(amount) {
-        let currentXP = this.getData('xp') + amount;
-        let xpToNextLevel = this.getData('xpToNextLevel');
-
-        while (currentXP >= xpToNextLevel) {
-            currentXP -= xpToNextLevel;
+        let xp = this.getData('xp') + amount;
+        let next = this.getData('xpToNextLevel');
+        while (xp >= next) {
+            xp -= next;
             this.levelUp();
-            xpToNextLevel = this.getData('xpToNextLevel');
+            next = this.getData('xpToNextLevel');
         }
-
-        this.setData('xp', currentXP);
+        this.setData('xp', xp);
+        this.scene.showFloatingText(`+${amount} XP`, this.x, this.y - 40, false, '#00ff7f');
         this.scene.updatePlayerHud();
     }
 
     levelUp() {
-        const newLevel = this.getData('level') + 1;
-        this.setData('level', newLevel);
+        const newLvl = this.getData('level') + 1;
+        const newMaxHp = Math.floor(this.getData('maxHp') * 1.15);
+        const newDmg = Math.floor(this.getData('damage') * 1.1);
+        const newXpToNext = Math.floor(this.getData('xpToNextLevel') * 1.5);
+
 
         // Incrementa os atributos primários de acordo com o crescimento da classe
         const growth = this.selectedClass.growth || {};
@@ -100,8 +102,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // Recalcula HP, dano e outros atributos derivados
         this.recomputeStats();
         this.setData('xpToNextLevel', Math.floor(this.getData('xpToNextLevel') * 1.5));
-
-        this.scene.showFloatingText('Level Up!', this.x, this.y - 50, false, '#ffd700');
+        this.scene.showFloatingText('LEVEL UP!', this.x, this.y, false, '#ffff00');
     }
 
     // Atualiza os status derivados (HP, dano, defesa...) com base nos atributos primários
@@ -112,7 +113,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setData('damage', dano);
         this.setData('defense', defesa);
     }
-
 
     die() {
         // Lógica de morte do jogador

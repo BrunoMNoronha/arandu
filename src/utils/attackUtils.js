@@ -128,12 +128,21 @@ export function defeatTarget(scene, target) {
         scene.gameOverText = scene.add.text(scene.scale.width / 2, scene.scale.height / 2, gameOverMsg, { fontSize: gameOverFont, color: '#ff3333', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5).setDepth(40);
         scene.tweens.add({ targets: scene.gameOverText, scale: 1.1, duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         
+        const restartButton = scene.add.text(scene.scale.width / 2, scene.scale.height / 2 + 80, 'Reiniciar', { fontSize: '32px', color: '#00ff7f', backgroundColor: '#222', padding: { top: 10, bottom: 10, left: 20, right: 20 } }).setOrigin(0.5).setDepth(41).setInteractive({ useHandCursor: true });
+        
+        // Pausar a cena DEPOIS de criar o botão, mas registrar o evento para ignorar a pausa.
         scene.scene.pause();
 
-        const restartButton = scene.add.text(scene.scale.width / 2, scene.scale.height / 2 + 80, 'Reiniciar', { fontSize: '32px', color: '#00ff7f', backgroundColor: '#222', padding: { top: 10, bottom: 10, left: 20, right: 20 } }).setOrigin(0.5).setDepth(41).setInteractive({ useHandCursor: true });
         restartButton.on('pointerdown', () => {
+            // Limpar o estado antes de reiniciar
+            if (scene.gameOverText) scene.gameOverText.destroy();
+            scene.gameOverText = null;
             scene.scene.restart({ selectedClass: scene.selectedClass });
         });
+
+        // Habilitar o input para este objeto mesmo com a cena pausada
+        scene.input.enable(restartButton);
+
     } else {
         target.die();
         scene.enemiesRemaining--;

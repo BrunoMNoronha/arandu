@@ -56,10 +56,15 @@
             create() {
                 this.cameras.main.setBackgroundColor('#1a1a1a');
                 const { width, height } = this.scale;
-                this.add.text(width/2, height * 0.2, 'Contos de Arandú', { fontSize: '52px', color: '#00ff7f', fontFamily:'Georgia, serif', stroke:'#000', strokeThickness:8 }).setOrigin(0.5).setWordWrapWidth(width * 0.9);
+                const isMobile = this.sys.game.device.os.android || this.sys.game.device.os.iOS;
+                const titleFont = isMobile ? '32px' : '52px';
+                const devFont = isMobile ? '16px' : '22px';
+                const pressFont = isMobile ? '20px' : '28px';
+                const pressMsg = isMobile ? 'Toque para jogar' : 'Toque para continuar';
+                this.add.text(width/2, height * 0.2, 'Contos de Arandú', { fontSize: titleFont, color: '#00ff7f', fontFamily:'Georgia, serif', stroke:'#000', strokeThickness:8 }).setOrigin(0.5).setWordWrapWidth(width * 0.9);
                 this.add.image(width/2, height/2, 'title-image').setAlpha(0.8);
-                this.add.text(width/2, height - 80, 'Desenvolvido por Bruno Menezes', { fontSize:'22px', color:'#ccc', fontStyle:'italic' }).setOrigin(0.5);
-                const pressText = this.add.text(width/2, height - 30, 'Toque para continuar', { fontSize:'28px', color:'#fff' }).setOrigin(0.5).setAlpha(0);
+                this.add.text(width/2, height - 80, 'Desenvolvido por Bruno Menezes', { fontSize: devFont, color:'#ccc', fontStyle:'italic' }).setOrigin(0.5);
+                const pressText = this.add.text(width/2, height - 30, pressMsg, { fontSize: pressFont, color:'#fff' }).setOrigin(0.5).setAlpha(0);
                 this.tweens.add({ targets: pressText, alpha:1, duration:1000, ease:'Power1', yoyo:true, repeat:-1, delay:1000 });
                 this.input.once('pointerdown', ()=> { this.cameras.main.fadeOut(500, 0, 0, 0); this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, ()=> this.scene.start('CharacterSelectScene')); });
             }
@@ -70,7 +75,10 @@
                 this.cameras.main.fadeIn(500, 0, 0, 0);
                 this.cameras.main.setBackgroundColor('#1a1a1a');
                 const { width, height } = this.scale;
-                this.add.text(width/2, height * 0.15,'Escolha seu Destino',{ fontSize:'48px', color:'#00ff7f', fontFamily:'Georgia, serif', stroke:'#000', strokeThickness:6 }).setOrigin(0.5).setWordWrapWidth(width * 0.9);
+                const isMobile = this.sys.game.device.os.android || this.sys.game.device.os.iOS;
+                const selectFont = isMobile ? '28px' : '48px';
+                const selectMsg = isMobile ? 'Escolha seu herói' : 'Escolha seu Destino';
+                this.add.text(width/2, height * 0.15, selectMsg, { fontSize: selectFont, color:'#00ff7f', fontFamily:'Georgia, serif', stroke:'#000', strokeThickness:6 }).setOrigin(0.5).setWordWrapWidth(width * 0.9);
                 this.createClassButton(width/2, height * 0.4, GameData.Classes.CACADOR);
                 this.createClassButton(width/2, height * 0.65, GameData.Classes.GUERREIRO);
             }
@@ -570,7 +578,10 @@
             defeatTarget(target) {
                 if (target === this.player) {
                     this.player.disableBody(true,true);
-                    this.gameOverText = this.add.text(this.scale.width/2, this.scale.height/2, 'FIM DE JOGO', { fontSize:'56px', color:'#ff3333', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5).setDepth(20);
+                const isMobile = this.sys.game.device.os.android || this.sys.game.device.os.iOS;
+                const gameOverFont = isMobile ? '32px' : '56px';
+                const gameOverMsg = isMobile ? 'FIM!' : 'FIM DE JOGO';
+                this.gameOverText = this.add.text(this.scale.width/2, this.scale.height/2, gameOverMsg, { fontSize: gameOverFont, color:'#ff3333', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5).setDepth(20);
                 } else {
                     target.die();
                     this.enemiesRemaining--;

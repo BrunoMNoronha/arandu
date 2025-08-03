@@ -117,13 +117,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
         this.setData('attributes', attrs);
 
+        // Recalcula status derivados apenas uma vez
         this.recomputeStats();
-        this.setData('hp', this.getData('maxHp')); // Cura total ao subir de nível
-        this.setData('xpToNextLevel', Math.floor(this.getData('xpToNextLevel') * 1.5));
 
-        // Recalcula HP, dano e outros atributos derivados
-        this.recomputeStats();
-        this.setData('xpToNextLevel', Math.floor(this.getData('xpToNextLevel') * 1.5));
+        // Aplica o aumento de nível e atributos calculados
+        this.setData('level', newLvl);
+        this.setData('maxHp', newMaxHp);
+        this.setData('damage', newDmg);
+        this.setData('hp', newMaxHp); // Cura total ao subir de nível
+        this.setData('xpToNextLevel', newXpToNext);
+
         this.scene.showFloatingText('LEVEL UP!', this.x, this.y, false, '#ffff00');
     }
 

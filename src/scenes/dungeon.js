@@ -168,6 +168,7 @@ export default class DungeonScene extends Phaser.Scene {
         }
         handleControls(this);
         updateSpecialAbilityUI(this);
+        this.checkWaveCompletion();
     }
 
     onResize(gameSize) {

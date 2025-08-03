@@ -75,15 +75,18 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         }
     }
     takeDamage(amount, isCrit = false) {
-        if (!this.active || this.getData('isDying')) return;
+        if (!this.active || this.getData('isDying')) return false;
+
         const newHp = this.getData('hp') - amount;
         this.setData('hp', newHp);
         this.scene.showFloatingText(Math.round(amount), this.x, this.y, isCrit);
         this.updateHealthBar();
+
         if (newHp <= 0) {
             this.setData('isDying', true);
-            defeatTarget(this.scene, this);
+            return true; // Inimigo foi derrotado
         }
+        return false; // Inimigo ainda está vivo
     }
     updateHealthBar() {
         if (!this.healthBar || !this.active) return;

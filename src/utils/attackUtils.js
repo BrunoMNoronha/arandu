@@ -76,7 +76,12 @@ export function enemyFireAttack(scene, enemy) {
 
 export function projectileHitEnemy(scene, proj, enemy) {
     if (enemy.active) {
-        enemy.takeDamage(proj.getData('damage') || 0, proj.getData('isCrit') || false);
+        const damage = proj.getData('damage') || 0;
+        const isCrit = proj.getData('isCrit') || false;
+        const isDefeated = enemy.takeDamage(damage, isCrit);
+        if (isDefeated) {
+            defeatTarget(scene, enemy);
+        }
     }
     proj.disableBody(true, true);
 }

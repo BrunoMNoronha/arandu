@@ -9,6 +9,7 @@ import { createHUD, updatePlayerHud, updateWaveProgressText, showFloatingText, r
 import { handleControls } from '../utils/controlUtils.js';
 import { fireAttack, projectileHitEnemy, projectileHitPlayer, playerHitEnemy } from '../utils/attackUtils.js';
 import { generatePlayerTexture, generateTatuZumbiTexture, generateAranhaDeDardoTexture, generateBossJiboiaTexture, generateWeaponTexture, generateProjectileTextures, generateIcons } from '../utils/assetUtils.js';
+import { useArrowRain, useShockwave } from '../utils/abilityUtils.js';
 
 export default class DungeonScene extends Phaser.Scene {
     constructor(){ super('DungeonScene'); }
@@ -295,37 +296,13 @@ export default class DungeonScene extends Phaser.Scene {
 
     executeSpecialAbility(targetPos) {
         this.player.setData('lastSpecialAttack', this.time.now);
-        if (this.selectedClass.id === 'CACADOR') {
-            // Chuva de Flechas
-            for (let i = 0; i < this.selectedClass.ability.waves; i++) {
-                this.time.delayedCall(i * 300, () => {
-                    for (let a = 0; a < 8; a++) {
-                        const angle = Phaser.Math.DegToRad(45 * a);
-                        const dir = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle));
-                        const proj = this.playerAttacks.get(targetPos.x, targetPos.y, 'player-projectile-texture');
-                        if (proj) {
-                            proj.setActive(true).setVisible(true);
-                            this.physics.velocityFromRotation(angle, 350, proj.body.velocity);
-                        }
-                    }
-                });
-            }
-            this.showFloatingText('Chuva de Flechas!', targetPos.x, targetPos.y, true, '#00ff00');
-        } else if (this.selectedClass.id === 'GUERREIRO') {
-            // Impacto Sísmico
-            this.showFloatingText('Impacto Sísmico!', targetPos.x, targetPos.y, true, '#00ff00');
-            this.enemies.children.iterate(enemy => {
-                if (enemy && enemy.active) {
-                    const dist = Phaser.Math.Distance.Between(targetPos.x, targetPos.y, enemy.x, enemy.y);
-                    if (dist < this.selectedClass.ability.radius) {
-                        enemy.takeDamage(this.player.getData('damage') * this.selectedClass.ability.damageMultiplier);
-                        enemy.setData('isStunned', true);
-                        this.time.delayedCall(this.selectedClass.ability.stunDuration, () => {
-                            enemy.setData('isStunned', false);
-                        });
-                    }
-                }
-            });
+        const abilityMap = {
+            CACADOR: useArrowRain,
+            GUERREIRO: useShockwave
+        };
+        const abilityFn = abilityMap[this.selectedClass.id];
+        if (abilityFn) {
+            abilityFn(this, targetPos);
         }
     }
 

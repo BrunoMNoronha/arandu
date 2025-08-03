@@ -4,7 +4,7 @@
 
 import { fireAttack, playerHitEnemy } from '../utils/attackUtils.js';
 import { handleControls } from '../utils/controlUtils.js';
-import { calcPhysicalAttack, calcMaxHp } from '../utils/attributeUtils.js';
+import { calcPhysicalAttack, calcMaxHp, calcMoveSpeed, calcAttackCooldown } from '../utils/attributeUtils.js';
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, selectedClass) {
@@ -15,14 +15,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.selectedClass = selectedClass;
         this.lastAttackDirection = new Phaser.Math.Vector2(0, -1);
 
-        // Atributos base do jogador, utilizados para recalcular os demais
-        // status sempre que houver um level up.
-        this.baseStats = {
-            vida: selectedClass.vida,
-            dano: selectedClass.dano,
-            defesa: selectedClass.defesa || 0
-        };
-
         this.setData({
             level: 1,
             xp: 0,
@@ -32,6 +24,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             maxHp: 0,
             hp: 0,
             damage: 0,
+            speed: selectedClass.velocidade,
+            attackCooldown: selectedClass.attackCooldown,
             isInvulnerable: false,
             lastAttack: 0,
             lastSpecialAttack: -Infinity
@@ -55,9 +49,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const attrs = this.getData('attributes');
         const newMaxHp = calcMaxHp(attrs);
         const newDamage = calcPhysicalAttack(attrs);
+        const newSpeed = calcMoveSpeed(attrs, this.selectedClass.velocidade);
+        const newCooldown = calcAttackCooldown(attrs, this.selectedClass.attackCooldown);
 
         this.setData('maxHp', newMaxHp);
         this.setData('damage', newDamage);
+        this.setData('speed', newSpeed);
+        this.setData('attackCooldown', newCooldown);
 
         if (this.getData('hp') > newMaxHp) {
             this.setData('hp', newMaxHp);
@@ -105,39 +103,28 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     levelUp() {
-        const newMaxHp = Math.floor(this.getData('maxHp') * 1.15);
-        const newDmg = Math.floor(this.getData('damage') * 1.1);
         const newXpToNext = Math.floor(this.getData('xpToNextLevel') * 1.5);
 
-        // Incrementa atributos com base na classe
-        const growth = this.selectedClass.growth;
-        const attrs = this.getData('attributes');
-        for (const key of Object.keys(attrs)) {
-            attrs[key] += growth[key] || 0;
-        }
-        this.setData('attributes', attrs);
-
-        // Recalcula status derivados apenas uma vez
-        this.recomputeStats();
-
-        // Aplica o aumento de nível e atributos calculados
         this.setData('level', this.getData('level') + 1);
-        this.setData('attributePoints', this.getData('attributePoints') + 1);
-        this.setData('maxHp', newMaxHp);
-        this.setData('damage', newDmg);
-        this.setData('hp', newMaxHp); // Cura total ao subir de nível
+        this.setData('attributePoints', this.getData('attributePoints') + 5);
         this.setData('xpToNextLevel', newXpToNext);
+        this.recomputeStats();
+        this.setData('hp', this.getData('maxHp'));
 
         this.scene.showFloatingText('LEVEL UP!', this.x, this.y, false, '#ffff00');
+        this.scene.updatePlayerHud();
     }
 
-    // Atualiza os status derivados (HP, dano, defesa...) com base nos atributos primários
-    recomputeStats() {
-        const { vida = 0, dano = 0, defesa = 0 } = this.baseStats;
-        this.setData('maxHp', vida);
-        this.setData('hp', vida);
-        this.setData('damage', dano);
-        this.setData('defense', defesa);
+    allocateAttribute(attr) {
+        let points = this.getData('attributePoints');
+        if (points <= 0) return false;
+        const attrs = this.getData('attributes');
+        attrs[attr] = (attrs[attr] || 0) + 1;
+        this.setData('attributes', attrs);
+        this.setData('attributePoints', points - 1);
+        this.recomputeStats();
+        this.scene.updatePlayerHud();
+        return true;
     }
 
     die() {

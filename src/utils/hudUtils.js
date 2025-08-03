@@ -40,8 +40,10 @@ export function updatePlayerHud(scene, playerData = {}) {
     const attrs = playerData.attributes || {};
     const str = attrs.FOR ?? 0;
     const agi = attrs.AGI ?? 0;
-    const int = attrs.INT ?? 0;
-    let attrTxt = `FOR:${str} AGI:${agi} INT:${int}`;
+    const vit = attrs.VIT ?? 0;
+    const des = attrs.DES ?? 0;
+    const sor = attrs.SOR ?? 0;
+    let attrTxt = `FOR:${str} AGI:${agi} VIT:${vit} DES:${des} SOR:${sor}`;
     if (playerData.attributePoints !== undefined) {
         attrTxt += ` | Pts:${playerData.attributePoints}`;
     }

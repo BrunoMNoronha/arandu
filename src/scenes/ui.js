@@ -6,12 +6,15 @@
 // Cena de interface do usuário (UI)
 // Dependências: Phaser, GameData
 
-import { GameData } from '../data/data.js';
 
 export default class UIScene extends Phaser.Scene {
     constructor() { super('UIScene'); }
     init(data) { this.playerData = data.playerData; this.classData = data.classData; }
     create() {
+        this.dungeonScene = this.scene.get('DungeonScene');
+        this.player = this.dungeonScene.player;
+        this.playerData = this.player.data.getAll();
+
         const { width, height } = this.scale;
         this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0);
         const panelWidth = Math.min(width * 0.9, 600);
@@ -28,25 +31,37 @@ export default class UIScene extends Phaser.Scene {
         let attrY = panelY - panelHeight / 2 + 80;
         const labelStyle = { fontSize: '18px', color: '#cccccc' };
         const valueStyle = { fontSize: '18px', color: '#ffffff', fontStyle: 'bold' };
-        this.createAttributeLine(attrX, attrY, 'Nível:', this.playerData.level, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Experiência:', `${this.playerData.xp} / ${this.playerData.xpToNextLevel}`, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Vida:', `${Math.round(this.playerData.hp)} / ${this.playerData.maxHp}`, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Dano:', this.playerData.damage, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Velocidade:', this.playerData.velocidade || this.classData.velocidade, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Cooldown Ataque:', (this.playerData.attackCooldown || this.classData.attackCooldown) + 'ms', labelStyle, valueStyle); attrY += 30;
+
+        this.levelValue = this.createAttributeLine(attrX, attrY, 'Nível:', this.playerData.level, labelStyle, valueStyle); attrY += 30;
+        this.xpValue = this.createAttributeLine(attrX, attrY, 'Experiência:', `${this.playerData.xp} / ${this.playerData.xpToNextLevel}`, labelStyle, valueStyle); attrY += 30;
+        this.hpValue = this.createAttributeLine(attrX, attrY, 'Vida:', `${Math.round(this.playerData.hp)} / ${this.playerData.maxHp}`, labelStyle, valueStyle); attrY += 30;
+        this.damageValue = this.createAttributeLine(attrX, attrY, 'Dano:', this.playerData.damage, labelStyle, valueStyle); attrY += 30;
+        this.speedValue = this.createAttributeLine(attrX, attrY, 'Velocidade:', this.playerData.speed || this.classData.velocidade, labelStyle, valueStyle); attrY += 30;
+        this.cooldownValue = this.createAttributeLine(attrX, attrY, 'Cooldown Ataque:', (this.playerData.attackCooldown || this.classData.attackCooldown) + 'ms', labelStyle, valueStyle); attrY += 30;
+
         const attrs = this.playerData.attributes || {};
-        this.createAttributeLine(attrX, attrY, 'Força:', attrs.FOR ?? 0, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Agilidade:', attrs.AGI ?? 0, labelStyle, valueStyle); attrY += 30;
-        this.createAttributeLine(attrX, attrY, 'Inteligência:', attrs.INT ?? 0, labelStyle, valueStyle); attrY += 30;
-        if (this.playerData.attributePoints !== undefined) {
-            this.createAttributeLine(attrX, attrY, 'Pontos de Atributo:', this.playerData.attributePoints, labelStyle, valueStyle); attrY += 30;
-        }
+        this.attrTexts = {};
+        this.plusButtons = [];
+        this.attrTexts.FOR = this.createAttributeLine(attrX, attrY, 'Força:', attrs.FOR ?? 0, labelStyle, valueStyle);
+        this.addPlusButton(attrX, attrY, 'FOR'); attrY += 30;
+        this.attrTexts.AGI = this.createAttributeLine(attrX, attrY, 'Agilidade:', attrs.AGI ?? 0, labelStyle, valueStyle);
+        this.addPlusButton(attrX, attrY, 'AGI'); attrY += 30;
+        this.attrTexts.VIT = this.createAttributeLine(attrX, attrY, 'Vitalidade:', attrs.VIT ?? 0, labelStyle, valueStyle);
+        this.addPlusButton(attrX, attrY, 'VIT'); attrY += 30;
+        this.attrTexts.DES = this.createAttributeLine(attrX, attrY, 'Destreza:', attrs.DES ?? 0, labelStyle, valueStyle);
+        this.addPlusButton(attrX, attrY, 'DES'); attrY += 30;
+        this.attrTexts.SOR = this.createAttributeLine(attrX, attrY, 'Sorte:', attrs.SOR ?? 0, labelStyle, valueStyle);
+        this.addPlusButton(attrX, attrY, 'SOR'); attrY += 30;
+
+        this.attributePointsText = this.createAttributeLine(attrX, attrY, 'Pontos de Atributo:', this.playerData.attributePoints, labelStyle, valueStyle); attrY += 30;
+
         if (this.playerData.damageReduction) {
             this.createAttributeLine(attrX, attrY, 'Redução de Dano:', Math.round(this.playerData.damageReduction * 100) + '%', labelStyle, valueStyle); attrY += 30;
         }
         if (this.playerData.critChance) {
             this.createAttributeLine(attrX, attrY, 'Chance de Crítico:', Math.round(this.playerData.critChance * 100) + '%', labelStyle, valueStyle); attrY += 30;
         }
+
         const placeholderX = panelX + 50;
         const placeholderY = panelY - panelHeight / 2 + 80;
         const placeholderW = panelWidth / 2 - 80;
@@ -62,10 +77,45 @@ export default class UIScene extends Phaser.Scene {
             this.scene.start('CharacterSelectScene');
         });
         this.input.keyboard.once('keydown-ESC', () => this.closeMenu());
+        this.refresh();
     }
+
     createAttributeLine(x, y, label, value, labelStyle, valueStyle) {
         this.add.text(x, y, label, labelStyle).setOrigin(0, 0.5);
-        this.add.text(x + 180, y, value, valueStyle).setOrigin(0, 0.5);
+        return this.add.text(x + 180, y, value, valueStyle).setOrigin(0, 0.5);
+    }
+
+    addPlusButton(x, y, attr) {
+        const btn = this.add.text(x + 220, y, '+', { fontSize: '18px', color: '#00ff7f' }).setOrigin(0, 0.5);
+        btn.setInteractive({ useHandCursor: true });
+        btn.on('pointerdown', () => this.increaseAttribute(attr));
+        this.plusButtons.push(btn);
+    }
+
+    increaseAttribute(attr) {
+        if (this.player.allocateAttribute(attr)) {
+            this.refresh();
+        }
+    }
+
+    refresh() {
+        this.playerData = this.player.data.getAll();
+        const attrs = this.playerData.attributes;
+        this.hpValue.setText(`${Math.round(this.playerData.hp)} / ${this.playerData.maxHp}`);
+        this.damageValue.setText(this.playerData.damage);
+        this.speedValue.setText(this.playerData.speed);
+        this.cooldownValue.setText(this.playerData.attackCooldown + 'ms');
+        this.attrTexts.FOR.setText(attrs.FOR);
+        this.attrTexts.AGI.setText(attrs.AGI);
+        this.attrTexts.VIT.setText(attrs.VIT);
+        this.attrTexts.DES.setText(attrs.DES);
+        this.attrTexts.SOR.setText(attrs.SOR);
+        this.attributePointsText.setText(this.playerData.attributePoints);
+        const enabled = this.playerData.attributePoints > 0;
+        this.plusButtons.forEach(btn => {
+            btn.setAlpha(enabled ? 1 : 0.3);
+            if (enabled) btn.setInteractive({ useHandCursor: true }); else btn.disableInteractive();
+        });
     }
     createPlaceholderBox(x, y, w, h, title) {
         const box = this.add.graphics();

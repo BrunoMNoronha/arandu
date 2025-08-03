@@ -2,7 +2,7 @@
 import { fireAttack } from './attackUtils.js';
 
 export function handleControls(scene) {
-    const speed = scene.selectedClass.velocidade;
+    const speed = scene.player.getData('speed');
     scene.player.body.setVelocity(0);
     if (scene.cursors.left.isDown) scene.player.body.setVelocityX(-speed);
     else if (scene.cursors.right.isDown) scene.player.body.setVelocityX(speed);
@@ -24,7 +24,7 @@ export function startJoystickAutoAttack(scene) {
         let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
         fireAttack(scene, dir);
         scene.joystickAttackInterval = scene.time.addEvent({
-            delay: scene.selectedClass.attackCooldown,
+            delay: scene.player.getData('attackCooldown'),
             loop: true,
             callback: () => {
                 let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);

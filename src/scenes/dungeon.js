@@ -79,7 +79,6 @@ export default class DungeonScene extends Phaser.Scene {
         }
         // Mobile: auto ataque ao manter pressionado o botão de ataque do joystick
         this.joystickAttackInterval = null;
-        this.time.now = 0;
         this.cameras.main.fadeIn(500, 0, 0, 0);
         this.background = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x1a2b1a).setOrigin(0).setDepth(-1);
 
@@ -139,7 +138,6 @@ export default class DungeonScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        this.time.now = time;
         if (this.isTargetingAbility) {
             const pointer = this.input.activePointer;
             this.abilityTargetMarker.setPosition(pointer.worldX, pointer.worldY);

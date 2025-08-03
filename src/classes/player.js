@@ -4,6 +4,7 @@
 
 import { fireAttack, playerHitEnemy } from '../utils/attackUtils.js';
 import { handleControls } from '../utils/controlUtils.js';
+import { calcPhysicalAttack, calcMaxHp } from '../utils/attributeUtils.js';
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, texture, selectedClass) {
@@ -26,14 +27,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             level: 1,
             xp: 0,
             xpToNextLevel: 100,
+            attributes: { ...this.selectedClass.baseAttributes },
+            maxHp: 0,
+            hp: 0,
+            damage: 0,
             isInvulnerable: false,
             lastAttack: 0,
             lastSpecialAttack: -Infinity
         });
 
-        // Calcula HP, dano e outros atributos derivados dos primários
         this.recomputeStats();
-
+        this.setData('hp', this.getData('maxHp'));
         this.setCollideWorldBounds(true);
     }
 
@@ -44,6 +48,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // A lógica de atualização da arma e outras atualizações que estavam no `update` de `DungeonScene`
         // podem ser movidas para cá ou gerenciadas de forma diferente.
+    }
+
+    recomputeStats() {
+        const attrs = this.getData('attributes');
+        const newMaxHp = calcMaxHp(attrs);
+        const newDamage = calcPhysicalAttack(attrs);
+
+        this.setData('maxHp', newMaxHp);
+        this.setData('damage', newDamage);
+
+        if (this.getData('hp') > newMaxHp) {
+            this.setData('hp', newMaxHp);
+        }
     }
 
     takeDamage(amount) {
@@ -92,12 +109,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         const newDmg = Math.floor(this.getData('damage') * 1.1);
         const newXpToNext = Math.floor(this.getData('xpToNextLevel') * 1.5);
 
-
-        // Incrementa os atributos primários de acordo com o crescimento da classe
-        const growth = this.selectedClass.growth || {};
-        for (const [key, value] of Object.entries(growth)) {
-            this.baseStats[key] = (this.baseStats[key] || 0) + value;
+        // Incrementa atributos com base na classe
+        const growth = this.selectedClass.growth;
+        const attrs = this.getData('attributes');
+        for (const key of Object.keys(attrs)) {
+            attrs[key] += growth[key] || 0;
         }
+        this.setData('attributes', attrs);
+
+        this.recomputeStats();
+        this.setData('hp', this.getData('maxHp')); // Cura total ao subir de nível
+        this.setData('xpToNextLevel', Math.floor(this.getData('xpToNextLevel') * 1.5));
 
         // Recalcula HP, dano e outros atributos derivados
         this.recomputeStats();

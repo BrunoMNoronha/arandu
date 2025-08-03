@@ -9,15 +9,16 @@ export const GameData = {
             id: 'CACADOR', nome: 'Caçador das Sombras', desc: 'Mestre do arco e das armadilhas furtivas.', cor: 0x8e44ad,
             velocidade: 230, vida: 90, dano: 22, attackType: 'ranged', attackCooldown: 350,
             critChance: 0.15, critMultiplier: 1.5,
-            growth: { vida: 8, dano: 3 },
-            ability: { name: 'Chuva de Flechas', cooldown: 12000, damageMultiplier: 0.7, waves: 4, duration: 2000, radius: 120, icon: 'arrow-rain-icon' }
+            baseAttributes: { FOR: 5, AGI: 8, VIT: 6, INT: 4, DES: 10, SOR: 6 },
+            growth: { FOR: 2, AGI: 3, VIT: 2, INT: 1, DES: 3, SOR: 2 },
+            ability: { name: 'Chuva de Flechas', cooldown: 12000, damageMultiplier: 0.5, waves: 4, duration: 2000, radius: 120, icon: 'arrow-rain-icon' }
         },
         GUERREIRO: {
             id: 'GUERREIRO', nome: 'Guerreiro de Ossos', desc: 'A força bruta da floresta, inabalável.', cor: 0xc0392b,
             velocidade: 170, vida: 180, dano: 25, attackType: 'melee', attackRange: 80, attackCooldown: 400,
             damageReduction: 0.15,
-            growth: { vida: 15, dano: 2, defesa: 2 },
-            critChance: 0.05, critMultiplier: 1.5,
+            baseAttributes: { FOR: 10, AGI: 5, VIT: 9, INT: 3, DES: 5, SOR: 4 },
+            growth: { FOR: 3, AGI: 2, VIT: 3, INT: 1, DES: 1, SOR: 1 },
             ability: { name: 'Impacto Sísmico', cooldown: 15000, damageMultiplier: 1, stunDuration: 2000, radius: 150, icon: 'shockwave-icon' }
         }
     },

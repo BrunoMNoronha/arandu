@@ -1,4 +1,6 @@
 // Funções utilitárias de controle
+import { fireAttack } from './attackUtils.js';
+
 export function handleControls(scene) {
     const speed = scene.selectedClass.velocidade;
     scene.player.body.setVelocity(0);
@@ -20,13 +22,13 @@ export function handleControls(scene) {
 export function startJoystickAutoAttack(scene) {
     if (!scene.joystickAttackInterval) {
         let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
-        scene.fireAttack(dir);
+        fireAttack(scene, dir);
         scene.joystickAttackInterval = scene.time.addEvent({
             delay: scene.selectedClass.attackCooldown,
             loop: true,
             callback: () => {
                 let dir = scene.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
-                scene.fireAttack(dir);
+                fireAttack(scene, dir);
             }
         });
     }

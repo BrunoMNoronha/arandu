@@ -257,10 +257,9 @@ export default class DungeonScene extends Phaser.Scene {
         return wave;
     }
 
-    createProjectileGroup(texture, maxSize) {
+    createProjectileGroup(texture) {
         return this.physics.add.group({
             defaultKey: texture,
-            maxSize: maxSize,
             runChildUpdate: true
         });
     }

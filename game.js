@@ -34,7 +34,22 @@
         class Joystick {
             constructor(scene, isAttackJoystick = false) { this.scene = scene; this.isAttackJoystick = isAttackJoystick; this.base = scene.add.circle(0, 0, 70, 0x000000, 0.3).setDepth(10).setVisible(false); this.thumb = scene.add.circle(0, 0, 35, 0xffffff, 0.4).setDepth(10).setVisible(false); this.vector = new Phaser.Math.Vector2(0, 0); this.fireDirection = new Phaser.Math.Vector2(0, -1); this.pointer = null; }
             activate(pointer) { this.pointer = pointer; this.base.setPosition(pointer.x, pointer.y).setVisible(true); this.thumb.setPosition(pointer.x, pointer.y).setVisible(true); } // NOVO: Bloqueia joystick durante mira
-            deactivate() { if (this.isAttackJoystick && this.scene.player.active) { this.scene.fireAttack(this.fireDirection); } this.pointer = null; this.vector.set(0, 0); this.base.setVisible(false); this.thumb.setVisible(false); }
+    deactivate() {
+        if (this.isAttackJoystick) {
+            // Cancela auto ataque do joystick
+            if (this.scene.joystickAttackInterval) {
+                this.scene.joystickAttackInterval.remove();
+                this.scene.joystickAttackInterval = null;
+            }
+            if (this.scene.player.active) {
+                this.scene.fireAttack(this.fireDirection);
+            }
+        }
+        this.pointer = null;
+        this.vector.set(0, 0);
+        this.base.setVisible(false);
+        this.thumb.setVisible(false);
+    }
             update() { if (!this.pointer) return; const angle = Phaser.Math.Angle.Between(this.base.x, this.base.y, this.pointer.x, this.pointer.y); const dist = Math.min(this.base.radius, Phaser.Math.Distance.Between(this.base.x, this.base.y, this.pointer.x, this.pointer.y)); this.thumb.x = this.base.x + dist * Math.cos(angle); this.thumb.y = this.base.y + dist * Math.sin(angle); this.vector.set(this.thumb.x - this.base.x, this.thumb.y - this.base.y); if (this.vector.length() > 0) { this.vector.normalize(); this.fireDirection.copy(this.vector); } }
         }
 
@@ -231,6 +246,26 @@
                         }
                     });
                 }
+        // Mobile: auto ataque ao manter pressionado o botão de ataque do joystick
+        this.joystickAttackInterval = null;
+        const originalActivate = this.attackJoystick.activate.bind(this.attackJoystick);
+        this.attackJoystick.activate = (pointer) => {
+            originalActivate(pointer);
+            if (!this.joystickAttackInterval) {
+                // Ataca imediatamente
+                let dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
+                this.fireAttack(dir);
+                // Inicia auto ataque
+                this.joystickAttackInterval = this.time.addEvent({
+                    delay: this.selectedClass.attackCooldown,
+                    loop: true,
+                    callback: () => {
+                        let dir = this.attackJoystick.fireDirection || new Phaser.Math.Vector2(0, -1);
+                        this.fireAttack(dir);
+                    }
+                });
+            }
+        };
                 this.time.now = 0;
                 this.cameras.main.fadeIn(500, 0, 0, 0);
                 this.background = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x1a2b1a).setOrigin(0).setDepth(-1);

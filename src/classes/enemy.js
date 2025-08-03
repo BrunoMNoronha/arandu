@@ -77,9 +77,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     takeDamage(amount, isCrit = false) {
         if (!this.active || this.getData('isDying')) return false;
 
-        const newHp = this.getData('hp') - amount;
+        const currentHp = this.getData('hp');
+        const damageApplied = Math.min(amount, currentHp);
+        const newHp = currentHp - damageApplied;
         this.setData('hp', newHp);
-        this.scene.showFloatingText(Math.round(amount), this.x, this.y, isCrit);
+        this.scene.showFloatingText(Math.round(damageApplied), this.x, this.y, isCrit);
         this.updateHealthBar();
 
         if (newHp <= 0) {

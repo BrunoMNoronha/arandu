@@ -75,14 +75,27 @@ export default class UIScene extends Phaser.Scene {
             });
         }
 
-        // Botão voltar maior
-        const returnButton = this.add.text(panelX, panelY + panelHeight / 2 - 30, 'Voltar à Seleção', {
-            fontSize: `${Math.round(panelWidth/18)}px`, color: '#ffc107', fontStyle: 'bold', align: 'center',
-            backgroundColor: '#333', padding: { top: 10, bottom: 10, left: 20, right: 20 }
+        // Botão voltar maior, fixo e com feedback visual ao toque
+        const returnButton = this.add.text(panelX, panelY + panelHeight / 2 - 20, 'Voltar à Seleção', {
+            fontSize: `${Math.round(panelWidth/14)}px`,
+            color: '#ffc107',
+            fontStyle: 'bold',
+            align: 'center',
+            backgroundColor: '#333',
+            padding: { top: 16, bottom: 16, left: 32, right: 32 }
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        // Feedback visual ao toque
         returnButton.on('pointerdown', () => {
+            returnButton.setStyle({ backgroundColor: '#555' });
+        });
+        returnButton.on('pointerup', () => {
+            returnButton.setStyle({ backgroundColor: '#333' });
             this.scene.stop();
             this.scene.start('CharacterSelectScene');
+        });
+        returnButton.on('pointerout', () => {
+            returnButton.setStyle({ backgroundColor: '#333' });
         });
 
         this.input.keyboard.once('keydown-ESC', () => this.closeMenu());

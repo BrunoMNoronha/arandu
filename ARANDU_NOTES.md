@@ -3,7 +3,7 @@
 #################################################################
 
 **Codinome do Gem:** Arandú
-**Status Atual:** Início da Fase 5 - Polimento do Core Loop e Expansão de Conteúdo.
+**Status Atual:** Em desenvolvimento - Fase 5
 **Data da Atualização:** 05/10/2025
 
 -----------------------------------------------------------------
@@ -58,10 +58,11 @@ O projeto será construído sobre três pilares: **Modularidade Máxima**, **Des
 ## PRÓXIMOS PASSOS (FASE 5)
 -----------------------------------------------------------------
 
--   [ ] **Sistema de Ataque do Jogador:** Implementar uma ação de ataque (ex: espada) que possa causar dano aos inimigos sem depender de colisão corporal.
--   [ ] **Animações de Personagens:** Criar e integrar animações de "parado" (idle), "andando" (walk) e "ataque" (attack) para o jogador e inimigo.
+-   [x] **Sistema de Ataque do Jogador:** Implementar uma ação de ataque (ex: espada) que possa causar dano aos inimigos sem depender de colisão corporal.
+-   [x] **Animações de Personagens:** Criar e integrar animações de "parado" (idle) e "andando" (walk) para o jogador.
+-   [x] **Refatoração do `CollisionSystem`:** Desacoplar a lógica de dano por toque, tornando-a uma consequência do ataque do inimigo e não um evento automático.
 -   [ ] **Feedback Sonoro (SFX):** Adicionar efeitos sonoros básicos para ações como ataque, recebimento de dano e morte de inimigos.
--   [ ] **Refatoração do `CollisionSystem`:** Desacoplar a lógica de dano por toque, tornando-a uma consequência do ataque do inimigo e não um evento automático.
+-   [ ] **Animação de Ataque:** Integrar a animação de ataque do jogador ao `AttackSystem`.
 
 -----------------------------------------------------------------
 ## HISTÓRICO DE FASES CONCLUÍDAS

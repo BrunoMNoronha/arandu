@@ -5,13 +5,15 @@ import { EnemyFactory } from '../factories/EnemyFactory';
 import { MovementSystem } from '../systems/MovementSystem';
 import { CollisionSystem } from '../systems/CollisionSystem';
 import { EnemyAISystem } from '../systems/EnemyAISystem';
+import { AttackSystem } from '../systems/AttackSystem';
 
 export class DungeonScene extends Scene {
     private player!: Physics.Arcade.Sprite;
-    private enemy!: Physics.Arcade.Sprite;
+    private enemies!: Physics.Arcade.Group;
     private movementSystem!: MovementSystem;
     private collisionSystem!: CollisionSystem;
-    private enemyAISystem!: EnemyAISystem;
+    private enemyAISystems: EnemyAISystem[] = [];
+    private attackSystem!: AttackSystem;
     private cursors!: Types.Input.Keyboard.CursorKeys;
     private map!: Tilemaps.Tilemap;
     private wallsLayer!: Tilemaps.TilemapLayer | null;
@@ -21,10 +23,8 @@ export class DungeonScene extends Scene {
     }
 
     create() {
-        // Inicia a cena da UI em paralelo
         this.scene.launch('UIScene');
 
-        // --- CRIAÇÃO DO MAPA ---
         this.map = this.make.tilemap({ key: 'dungeon_map' });
         const tileset = this.map.addTilesetImage('dungeon_tiles', 'dungeon_tiles');
         
@@ -35,24 +35,27 @@ export class DungeonScene extends Scene {
             this.wallsLayer?.setCollisionByProperty({ collides: true });
         }
 
-        // --- CRIAÇÃO DE PERSONAGENS ---
         this.player = PlayerFactory.create(this, 100, 120);
-        this.enemy = EnemyFactory.create(this, 250, 120);
+        
+        this.enemies = this.physics.add.group();
+        const enemy1 = EnemyFactory.create(this, 250, 120);
+        this.enemies.add(enemy1);
 
-        // --- CONFIGURAÇÃO DE FÍSICA E COLISÃO COM O MAPA ---
         if (this.wallsLayer) {
             this.physics.add.collider(this.player, this.wallsLayer);
-            this.physics.add.collider(this.enemy, this.wallsLayer);
+            this.physics.add.collider(this.enemies, this.wallsLayer);
         }
 
-        // --- SISTEMAS ---
         this.cursors = this.input.keyboard!.createCursorKeys();
         this.movementSystem = new MovementSystem(this.cursors, this.player);
         this.collisionSystem = new CollisionSystem(this);
-        this.collisionSystem.setupCollider(this.player, this.enemy);
-        this.enemyAISystem = new EnemyAISystem(this.enemy);
+        this.collisionSystem.setupCollider(this.player, this.enemies);
+        this.attackSystem = new AttackSystem(this, this.player);
 
-        // --- CÂMERA E LIMITES DO MUNDO ---
+        this.enemies.getChildren().forEach(enemy => {
+            this.enemyAISystems.push(new EnemyAISystem(enemy as Physics.Arcade.Sprite));
+        });
+
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.startFollow(this.player, true);
@@ -60,6 +63,7 @@ export class DungeonScene extends Scene {
 
     update() {
         this.movementSystem.update();
-        this.enemyAISystem.update();
+        this.attackSystem.update(this.enemies);
+        this.enemyAISystems.forEach(ai => ai.update());
     }
 }

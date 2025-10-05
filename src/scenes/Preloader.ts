@@ -6,8 +6,10 @@ export class Preloader extends Scene {
     }
 
     preload() {
+        // Carrega o atlas de animação do jogador
+        this.load.atlas('player', 'assets/player_spritesheet.png', 'assets/player_atlas.json');
+        
         // Assets existentes
-        this.load.image('player', 'assets/player.png');
         this.load.image('enemy', 'assets/enemy.png');
 
         // --- ASSETS DO MAPA ---

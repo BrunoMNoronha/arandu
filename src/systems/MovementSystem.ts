@@ -1,16 +1,18 @@
 import { Physics } from 'phaser';
-// Correção: Importando 'Types' como um tipo.
 import type { Types } from 'phaser';
+import { AnimationSystem } from './AnimationSystem';
 
-const PLAYER_SPEED = 200;
+const PLAYER_SPEED = 100;
 
 export class MovementSystem {
     private cursors: Types.Input.Keyboard.CursorKeys;
     private player: Physics.Arcade.Sprite;
+    private animationSystem: AnimationSystem;
 
     constructor(cursors: Types.Input.Keyboard.CursorKeys, player: Physics.Arcade.Sprite) {
         this.cursors = cursors;
         this.player = player;
+        this.animationSystem = new AnimationSystem(this.player);
     }
 
     public update(): void {
@@ -27,5 +29,7 @@ export class MovementSystem {
         } else if (this.cursors.down.isDown) {
             this.player.setVelocityY(PLAYER_SPEED);
         }
+
+        this.animationSystem.update();
     }
 }

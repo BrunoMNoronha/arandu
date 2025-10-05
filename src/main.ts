@@ -1,14 +1,6 @@
 import Phaser from 'phaser';
-
-// Por enquanto, uma cena vazia apenas para teste
-class GameScene extends Phaser.Scene {
-  constructor() {
-    super('GameScene');
-  }
-  create() {
-    // A tela preta do jogo será renderizada aqui
-  }
-}
+import { Preloader } from './scenes/Preloader';
+import { DungeonScene } from './scenes/DungeonScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -18,7 +10,8 @@ const config: Phaser.Types.Core.GameConfig = {
     width: '100%',
     height: '100%',
   },
-  scene: [GameScene], // Adicionamos nossa cena de teste
+  // Registra as cenas do jogo
+  scene: [Preloader, DungeonScene],
   physics: {
     default: 'arcade',
     arcade: {

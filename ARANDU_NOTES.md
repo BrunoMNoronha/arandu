@@ -3,7 +3,7 @@
 #################################################################
 
 **Codinome do Gem:** Arandú
-**Status Atual:** Início da Fase 4 - Aprimoramento do Core Gameplay e IA.
+**Status Atual:** Início da Fase 5 - Polimento do Core Loop e Expansão de Conteúdo.
 **Data da Atualização:** 05/10/2025
 
 -----------------------------------------------------------------
@@ -55,17 +55,24 @@ O projeto será construído sobre três pilares: **Modularidade Máxima**, **Des
 * Solução Potencial: Utilizar o Objeto DOM do Phaser (`this.add.dom`) para renderizar HTML e CSS sobre o canvas, aproveitando a flexibilidade do desenvolvimento web moderno para a UI.
 
 -----------------------------------------------------------------
-## PRÓXIMOS PASSOS (FASE 4)
+## PRÓXIMOS PASSOS (FASE 5)
 -----------------------------------------------------------------
 
--   [ ] **IA do Inimigo (Básico):** Criar um `EnemyAISystem` que faça o inimigo patrulhar uma área ou perseguir o jogador quando ele se aproximar.
--   [ ] **Sistema de Vida e Dano:** Implementar `HealthComponent` para o jogador e inimigos. A colisão agora deverá causar dano em vez de destruir o inimigo instantaneamente.
--   [ ] **Interface do Usuário (UI):** Desenvolver um `UIScene` para exibir informações básicas, como a vida do jogador.
--   [ ] **Feedback Visual:** Adicionar um efeito de "flash" vermelho no jogador e no inimigo ao receberem dano para melhorar o feedback da ação.
+-   [ ] **Sistema de Ataque do Jogador:** Implementar uma ação de ataque (ex: espada) que possa causar dano aos inimigos sem depender de colisão corporal.
+-   [ ] **Animações de Personagens:** Criar e integrar animações de "parado" (idle), "andando" (walk) e "ataque" (attack) para o jogador e inimigo.
+-   [ ] **Feedback Sonoro (SFX):** Adicionar efeitos sonoros básicos para ações como ataque, recebimento de dano e morte de inimigos.
+-   [ ] **Refatoração do `CollisionSystem`:** Desacoplar a lógica de dano por toque, tornando-a uma consequência do ataque do inimigo e não um evento automático.
 
 -----------------------------------------------------------------
 ## HISTÓRICO DE FASES CONCLUÍDAS
 -----------------------------------------------------------------
+
+### RESUMO DA FASE 4 (CONCLUÍDA EM 05/10/2025)
+* **IA do Inimigo (Básico):** Criado o `EnemyAISystem` para lógica de patrulha horizontal. O inimigo agora se move autonomamente e inverte a direção ao colidir com as paredes.
+* **Sistema de Vida e Dano:** Implementado o `HealthComponent` para gerenciar a vida das entidades. A colisão entre jogador e inimigo agora causa dano a ambos.
+* **Interface do Usuário (UI):** Desenvolvida uma `UIScene` para exibir a vida do jogador, que é atualizada dinamicamente através de eventos globais.
+* **Feedback Visual:** Adicionado efeito de "flash" vermelho para indicar recebimento de dano tanto no jogador quanto no inimigo.
+* **Marco Atingido:** O jogo possui um loop de gameplay mais robusto com combate básico, IA de patrulha e feedback de interface.
 
 ### RESUMO DA FASE 3 (CONCLUÍDA EM 05/10/2025)
 * Padrão Factory implementado para a criação de inimigos (`EnemyFactory`).

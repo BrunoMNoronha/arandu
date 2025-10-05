@@ -1,4 +1,5 @@
 import { Scene, Physics } from 'phaser';
+import { HealthComponent } from '../components/HealthComponent';
 
 export class EnemyFactory {
     /**
@@ -9,11 +10,11 @@ export class EnemyFactory {
      * @returns O sprite do inimigo com física habilitada.
      */
     public static create(scene: Scene, x: number, y: number): Physics.Arcade.Sprite {
-        // Cria o sprite do inimigo usando o asset 'enemy'.
         const enemy = scene.physics.add.sprite(x, y, 'enemy');
-
-        // Impede que o inimigo saia dos limites do mundo do jogo.
         enemy.setCollideWorldBounds(true);
+
+        // Anexa o HealthComponent ao Data Manager do sprite.
+        enemy.setData('health', new HealthComponent(scene, enemy, 30));
 
         return enemy;
     }

@@ -1,4 +1,5 @@
 import { Scene, Physics } from 'phaser';
+import { HealthComponent } from '../components/HealthComponent';
 
 export class CollisionSystem {
     private scene: Scene;
@@ -22,34 +23,27 @@ export class CollisionSystem {
         );
     }
 
-    /**
-     * Callback executado quando dois objetos de física se sobrepõem.
-     * CORREÇÃO: Os parâmetros são definidos como 'any' para aceitar a união de tipos do Phaser.
-     * A segurança é garantida por Type Guards (instanceof) dentro da função.
-     * @param obj1 O primeiro objeto na colisão (esperado ser o jogador).
-     * @param obj2 O segundo objeto na colisão (esperado ser o inimigo).
-     */
     private handlePlayerEnemyCollision(obj1: any, obj2: any): void {
-        // Type Guard: Garante que estamos lidando com Sprites antes de continuar.
         if (!(obj1 instanceof Physics.Arcade.Sprite) || !(obj2 instanceof Physics.Arcade.Sprite)) {
             return;
         }
         
+        const player = obj1 as Physics.Arcade.Sprite;
         const enemy = obj2 as Physics.Arcade.Sprite;
 
-        console.log('Colisão detectada entre Jogador e Inimigo!');
-        
-        if (enemy.body instanceof Physics.Arcade.Body) {
-            enemy.body.enable = false;
+        const playerHealth = player.getData('health') as HealthComponent;
+        const enemyHealth = enemy.getData('health') as HealthComponent;
+
+        // Evita dano múltiplo se um dos corpos já foi desativado
+        if (!player.body?.enable || !enemy.body?.enable) {
+            return;
         }
-        
-        this.scene.add.tween({
-            targets: enemy,
-            alpha: 0,
-            duration: 300,
-            onComplete: () => {
-                enemy.destroy();
-            }
-        });
+
+        if (playerHealth) {
+            playerHealth.takeDamage(10);
+        }
+        if (enemyHealth) {
+            enemyHealth.takeDamage(20); // Dano maior do jogador para o inimigo
+        }
     }
 }

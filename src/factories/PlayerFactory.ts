@@ -1,4 +1,5 @@
 import { Scene, Physics } from 'phaser';
+import { HealthComponent } from '../components/HealthComponent';
 
 export class PlayerFactory {
     /**
@@ -9,11 +10,11 @@ export class PlayerFactory {
      * @returns O sprite do jogador com física habilitada.
      */
     public static create(scene: Scene, x: number, y: number): Physics.Arcade.Sprite {
-        // Cria o sprite do jogador usando o asset 'player' que já carregamos.
         const player = scene.physics.add.sprite(x, y, 'player');
-
-        // Impede que o jogador saia dos limites do mundo do jogo.
         player.setCollideWorldBounds(true);
+
+        // Anexa o HealthComponent ao Data Manager do sprite.
+        player.setData('health', new HealthComponent(scene, player, 100));
 
         return player;
     }

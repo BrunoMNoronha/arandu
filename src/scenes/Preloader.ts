@@ -6,14 +6,16 @@ export class Preloader extends Scene {
     }
 
     preload() {
-        // O Vite move os assets da pasta 'public' para a raiz do servidor.
-        // Portanto, o caminho base já é o correto.
+        // Assets existentes
         this.load.image('player', 'assets/player.png');
         this.load.image('enemy', 'assets/enemy.png');
+
+        // --- ASSETS DO MAPA ---
+        this.load.image('dungeon_tiles', 'assets/dungeon_tiles.png');
+        this.load.tilemapTiledJSON('dungeon_map', 'assets/dungeon_map.json');
     }
 
     create() {
-        // Quando o carregamento estiver completo, inicia a cena principal do jogo.
         this.scene.start('DungeonScene');
     }
 }

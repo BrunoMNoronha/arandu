@@ -4,13 +4,18 @@ import { DungeonScene } from './scenes/DungeonScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
+  // 1. Resolução base do jogo (largura do mapa x altura do mapa)
+  width: 320,  // 20 tiles * 16 pixels
+  height: 240, // 15 tiles * 16 pixels
   scale: {
-    mode: Phaser.Scale.RESIZE,
+    // 2. Modo FIT para escalar mantendo a proporção
+    mode: Phaser.Scale.FIT,
     parent: 'game-container',
-    width: '100%',
-    height: '100%',
+    // 3. Centraliza o jogo na tela
+    autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  // Registra as cenas do jogo
+  // 4. Garante que os pixels fiquem nítidos ao escalar
+  pixelArt: true,
   scene: [Preloader, DungeonScene],
   physics: {
     default: 'arcade',
@@ -20,5 +25,4 @@ const config: Phaser.Types.Core.GameConfig = {
   },
 };
 
-// Inicia o jogo
 new Phaser.Game(config);

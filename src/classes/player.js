@@ -2,11 +2,37 @@
 // Classe Player para o jogador do jogo
 // Dependências: Phaser
 
-import { fireAttack, playerHitEnemy } from '../utils/attackUtils.js';
-import { handleControls } from '../utils/controlUtils.js';
 import { calcPhysicalAttack, calcMaxHp, calcMoveSpeed, calcAttackCooldown } from '../utils/attributeUtils.js';
 
+/**
+ * @typedef {Object} PlayerClassConfig
+ * @property {string} id
+ * @property {number} velocidade
+ * @property {number} attackCooldown
+ * @property {number} [attackRange]
+ * @property {number} [damageReduction]
+ * @property {number} cor
+ * @property {Record<string, number>} baseAttributes
+ * @property {{ name: string, cooldown: number, radius: number }} ability
+ */
+
+/**
+ * @typedef {Object} PlayerUpdateInput
+ * @property {Phaser.Math.Vector2} [movementVelocity]
+ * @property {Phaser.Math.Vector2} [attackDirection]
+ */
+
+/**
+ * @extends Phaser.Physics.Arcade.Sprite
+ */
 export default class Player extends Phaser.Physics.Arcade.Sprite {
+    /**
+     * @param {Phaser.Scene} scene
+     * @param {number} x
+     * @param {number} y
+     * @param {string} texture
+     * @param {PlayerClassConfig} selectedClass
+     */
     constructor(scene, x, y, texture, selectedClass) {
         super(scene, x, y, texture);
         scene.add.existing(this);
@@ -36,10 +62,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
     }
 
-    update(time, delta, cursors, moveJoystick, attackJoystick) {
+    /**
+     * @param {number} time
+     * @param {number} delta
+     * @param {PlayerUpdateInput} [input]
+     * @returns {void}
+     */
+    update(time, delta, input = {}) {
         if (!this.active) return;
 
-        handleControls(this.scene);
+        const { attackDirection, movementVelocity } = input;
+        if (attackDirection && attackDirection.length() > 0) {
+            this.lastAttackDirection.copy(attackDirection).normalize();
+        } else if (movementVelocity && movementVelocity.length() > 0) {
+            this.lastAttackDirection.copy(movementVelocity).normalize();
+        }
 
         // A lógica de atualização da arma e outras atualizações que estavam no `update` de `DungeonScene`
         // podem ser movidas para cá ou gerenciadas de forma diferente.

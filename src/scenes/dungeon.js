@@ -115,6 +115,9 @@ export default class DungeonScene extends Phaser.Scene {
         this.moveJoystick = new Joystick(this);
         this.attackJoystick = new Joystick(this, true);
 
+        this._movementVectorCache = new Phaser.Math.Vector2();
+        this._attackVectorCache = new Phaser.Math.Vector2();
+
         // Marcador visual para a área da habilidade
         const abilityRadius = this.selectedClass.ability.radius;
         this.abilityTargetMarker = this.add.graphics({
@@ -143,23 +146,33 @@ export default class DungeonScene extends Phaser.Scene {
         this.isLandscape = this.scale.width > this.scale.height;
     }
 
+    /**
+     * @param {number} time
+     * @param {number} delta
+     * @returns {void}
+     */
     update(time, delta) {
         if (this.isTargetingAbility) {
             const pointer = this.input.activePointer;
             this.abilityTargetMarker.setPosition(pointer.worldX, pointer.worldY);
         }
 
-        this.player.update(time, delta, this.cursors, this.moveJoystick, this.attackJoystick);
+        handleControls(this);
 
-        let dir = this.player.lastAttackDirection;
-        if (this.attackJoystick && this.attackJoystick.vector.length() > 0) {
-            dir = this.attackJoystick.vector.clone().normalize();
-            this.player.lastAttackDirection = dir;
-        } else if (this.player.body.velocity.length() > 0) {
-            dir = this.player.body.velocity.clone().normalize();
-            this.player.lastAttackDirection = dir;
+        const movementVelocity = this._movementVectorCache.copy(this.player.body.velocity);
+        const attackVector = (this.attackJoystick && this.attackJoystick.vector.length() > 0)
+            ? this._attackVectorCache.copy(this.attackJoystick.vector)
+            : undefined;
+
+        this.player.update(time, delta, {
+            attackDirection: attackVector,
+            movementVelocity,
+        });
+
+        const dir = this.player.lastAttackDirection;
+        if (this.attackJoystick) {
+            this.attackJoystick.fireDirection = dir;
         }
-        this.attackJoystick.fireDirection = dir;
 
         if (this.weaponSprite && this.player.active) {
             const offset = 28;
@@ -172,7 +185,6 @@ export default class DungeonScene extends Phaser.Scene {
             this.weaponSprite.setVisible(false);
             return;
         }
-        handleControls(this);
         updateSpecialAbilityUI(this);
         this.checkWaveCompletion();
     }

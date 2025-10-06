@@ -10,5 +10,6 @@ export const GOBLIN_CONFIG: EnemyConfig = Object.freeze({
         detectionRadius: 120,
         patrolSpeed: 45,
         chaseSpeed: 75
-    }
+    },
+    xpReward: 25
 }) as EnemyConfig;

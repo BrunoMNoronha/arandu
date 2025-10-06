@@ -18,6 +18,7 @@ export class EnemyFactory {
         // Anexa o HealthComponent ao Data Manager do sprite.
         const enemyConfig = ConfigService.getInstance().getEnemyConfig();
         enemy.setData('health', new HealthComponent(scene, enemy, enemyConfig.maxHealth, damageTextManager));
+        enemy.setData('xpReward', enemyConfig.xpReward);
 
         return enemy;
     }

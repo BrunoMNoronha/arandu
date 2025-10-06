@@ -26,12 +26,18 @@ export interface AttributeProgressionRange {
 
 export interface AttributeProgressionConfig {
     readonly pointsPerLevel: AttributeProgressionRange;
+    readonly experience: ExperienceProgressionConfig;
 }
 
 export interface PlayerAttributesConfig {
     readonly base: PrimaryAttributes;
     readonly baseValues: AttributeBaseValues;
     readonly progression: AttributeProgressionConfig;
+}
+
+export interface ExperienceProgressionConfig {
+    readonly baseExperienceToLevel: number;
+    readonly growthRate: number;
 }
 
 export interface PlayerMovementConfig {
@@ -77,6 +83,14 @@ export interface PlayerStats {
     readonly attack: PlayerAttackDerivedStats;
     readonly movementSpeed: number;
     readonly progression: AttributeProgressionConfig;
+    readonly progressionState: PlayerProgressionState;
+}
+
+export interface PlayerProgressionState {
+    readonly level: number;
+    readonly experience: number;
+    readonly experienceToNextLevel: number;
+    readonly availableAttributePoints: number;
 }
 
 export interface EnemyAISettings {
@@ -89,6 +103,7 @@ export interface EnemyAISettings {
 export interface EnemyConfig {
     readonly maxHealth: number;
     readonly ai: EnemyAISettings;
+    readonly xpReward: number;
 }
 
 export interface CollisionConfig {

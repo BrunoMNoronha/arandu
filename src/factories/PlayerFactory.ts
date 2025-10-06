@@ -4,6 +4,7 @@ import { ConfigService } from '../config/ConfigService';
 import { DamageTextManager } from '../components/DamageTextManager';
 import type { PlayerStats } from '../config/types';
 import { AttributeCalculator } from '../systems/attributes/AttributeCalculator';
+import { PlayerProgressionSystem } from '../systems/PlayerProgressionSystem';
 
 export class PlayerFactory {
     public static create(scene: Scene, x: number, y: number, damageTextManager: DamageTextManager): Physics.Arcade.Sprite {
@@ -18,6 +19,7 @@ export class PlayerFactory {
         player.setData('health', new HealthComponent(scene, player, playerStats.derived.maxHealth, damageTextManager));
         scene.game.registry.set('player-stats', playerStats);
         scene.game.events.emit('player-stats-inicializados', playerStats);
+        PlayerProgressionSystem.getInstance().initialize(scene, player, playerStats, playerConfig);
 
         // Cria as animações do jogador
         scene.anims.create({

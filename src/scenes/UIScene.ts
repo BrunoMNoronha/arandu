@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { ConfigService } from '../config/ConfigService';
-import type { PlayerStats } from '../config/types';
+import type { DerivedAttributes, PlayerStats, PrimaryAttributes } from '../config/types';
+import type { PlayerProgressionUpdatePayload } from '../systems/PlayerProgressionSystem';
 
 interface WaveStartedEventPayload {
     readonly waveNumber: number;
@@ -12,89 +13,382 @@ interface WaveClearedEventPayload {
     readonly totalWaves: number;
 }
 
+interface ResourceUpdatePayload {
+    readonly current: number;
+    readonly max: number;
+}
+
+const ATTRIBUTE_DEFINITIONS: ReadonlyArray<{ key: keyof PrimaryAttributes; label: string }> = [
+    { key: 'strength', label: 'FOR' },
+    { key: 'agility', label: 'AGI' },
+    { key: 'vitality', label: 'VIT' },
+    { key: 'intelligence', label: 'INT' },
+    { key: 'dexterity', label: 'DES' },
+];
+
+type AttributeKey = (typeof ATTRIBUTE_DEFINITIONS)[number]['key'];
+
 export class UIScene extends Scene {
-    private healthText!: Phaser.GameObjects.Text;
-    private waveText!: Phaser.GameObjects.Text;
+    private static stylesInjected: boolean = false;
+
     private totalWaves: number = 0;
-    private attributesText!: Phaser.GameObjects.Text;
-    private derivedText!: Phaser.GameObjects.Text;
+    private hudContainer!: Phaser.GameObjects.DOMElement;
+    private statusElements!: {
+        readonly wave: HTMLElement;
+        readonly level: HTMLElement;
+        readonly health: HTMLElement;
+        readonly mana: HTMLElement;
+        readonly experience: HTMLElement;
+        readonly availablePoints: HTMLElement;
+        readonly derived: HTMLElement;
+    };
+    private readonly attributeValueElements: Map<AttributeKey, HTMLElement> = new Map();
+    private readonly attributeButtons: Map<AttributeKey, HTMLButtonElement> = new Map();
+    private attributePanelElement!: HTMLElement;
+    private levelUpOverlayElement!: HTMLElement;
+    private lastAvailableAttributePoints: number = 0;
+    private readonly onAttributeButtonClicked: (event: Event) => void;
 
     constructor() {
         super('UIScene');
+        this.onAttributeButtonClicked = (event: Event): void => {
+            const target = event.currentTarget as HTMLButtonElement | null;
+            const attributeKey = target?.dataset.attribute as AttributeKey | undefined;
+            if (!attributeKey) {
+                return;
+            }
+            this.game.events.emit('attribute-allocation-requested', { attribute: attributeKey });
+        };
     }
 
     public create(): void {
-        const currentHealth = (this.game.registry.get('player-health') as number | undefined) ?? 0;
         const waveConfig = ConfigService.getInstance().getWaveConfig();
         this.totalWaves = waveConfig.totalWaves;
 
-        // Exibe o texto inicial de vida no canto superior esquerdo para reforçar informações críticas ao jogador.
-        this.healthText = this.add.text(10, 10, `Vida: ${currentHealth}`, {
-            fontSize: '16px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 4
-        });
-
-        this.waveText = this.add.text(10, 32, this.formatWaveText(0, this.totalWaves), {
-            fontSize: '16px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 4
-        });
-
-        this.attributesText = this.add.text(10, 54, 'Atributos: --', {
-            fontSize: '14px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3
-        });
-
-        this.derivedText = this.add.text(10, 74, 'Derivados: --', {
-            fontSize: '14px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 3
-        });
+        this.ensureStylesInjected();
+        this.createHud();
 
         const existingStats = this.game.registry.get('player-stats') as PlayerStats | undefined;
         if (existingStats) {
             this.onPlayerStatsInicializados(existingStats);
         }
 
-        // Escuta o evento global para atualizar a vida do jogador sem polling constante.
+        const currentHealth = this.game.registry.get('player-health') as number | undefined;
+        const maxHealth = this.game.registry.get('player-max-health') as number | undefined;
+        if (typeof currentHealth === 'number' && typeof maxHealth === 'number') {
+            this.updateHealthText({ current: currentHealth, max: maxHealth });
+        }
+
+        const currentMana = this.game.registry.get('player-mana') as number | undefined;
+        const maxMana = this.game.registry.get('player-max-mana') as number | undefined;
+        if (typeof currentMana === 'number' && typeof maxMana === 'number') {
+            this.updateManaText({ current: currentMana, max: maxMana });
+        }
+
         this.game.events.on('player-health-changed', this.updateHealthText, this);
+        this.game.events.on('player-mana-changed', this.updateManaText, this);
+        this.game.events.on('player-progression-updated', this.onPlayerProgressionUpdated, this);
         this.game.events.on('wave-started', this.onWaveStarted, this);
         this.game.events.on('wave-cleared', this.onWaveCleared, this);
         this.game.events.on('all-waves-cleared', this.onAllWavesCleared, this);
         this.game.events.on('player-stats-inicializados', this.onPlayerStatsInicializados, this);
 
-        // Garante que a cena seja limpa ao ser desligada para evitar listeners duplicados e vazamentos.
         this.events.on('shutdown', this.handleShutdown, this);
     }
 
-    private updateHealthText(health: number): void {
-        this.healthText.setText(`Vida: ${health}`);
+    private ensureStylesInjected(): void {
+        if (UIScene.stylesInjected) {
+            return;
+        }
+        const styleElement: HTMLStyleElement = document.createElement('style');
+        styleElement.setAttribute('data-origin', 'ui-scene');
+        styleElement.textContent = `
+            .hud-root {
+                position: absolute;
+                top: 0;
+                left: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px;
+                width: 100%;
+                pointer-events: none;
+                color: #ffffff;
+                font-family: 'Trebuchet MS', sans-serif;
+                text-shadow: 1px 1px 2px #000000;
+                box-sizing: border-box;
+            }
+            .hud-status {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px 16px;
+                background: rgba(0, 0, 0, 0.55);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+                padding: 10px;
+                pointer-events: auto;
+            }
+            .hud-status__item {
+                min-width: 120px;
+                font-size: 14px;
+            }
+            .hud-wave {
+                align-self: flex-start;
+                background: rgba(0, 0, 0, 0.55);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-size: 15px;
+                pointer-events: auto;
+            }
+            .hud-attribute-panel {
+                position: relative;
+                max-width: 320px;
+                background: rgba(12, 12, 12, 0.88);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 10px;
+                padding: 16px;
+                display: none;
+                flex-direction: column;
+                gap: 12px;
+                pointer-events: auto;
+                animation: hud-pop 220ms ease-out;
+            }
+            .hud-attribute-panel--visible {
+                display: flex;
+            }
+            .hud-attribute-panel h2 {
+                margin: 0;
+                font-size: 16px;
+                color: #ffe066;
+            }
+            .hud-attribute-panel__points {
+                font-size: 15px;
+                color: #8aff8a;
+            }
+            .hud-attribute-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .hud-attribute-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                font-size: 14px;
+            }
+            .hud-attribute-row button {
+                background: #27ae60;
+                border: none;
+                color: #ffffff;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background 120ms ease;
+            }
+            .hud-attribute-row button:disabled {
+                background: #3d4a3f;
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+            .hud-attribute-row button:not(:disabled):hover {
+                background: #1e874b;
+            }
+            .hud-derived {
+                font-size: 13px;
+                line-height: 1.4;
+                color: #d5e4ff;
+            }
+            .hud-levelup-overlay {
+                position: absolute;
+                inset: 0;
+                display: none;
+                justify-content: center;
+                pointer-events: auto;
+            }
+            .hud-levelup-overlay--visible {
+                display: flex;
+            }
+            .hud-levelup-overlay__backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.65);
+                pointer-events: auto;
+            }
+            .hud-levelup-overlay__content {
+                position: relative;
+                margin-top: 100px;
+            }
+            .hud-levelup-overlay__message {
+                position: absolute;
+                top: -40px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 18px;
+                color: #ffe066;
+                text-shadow: 2px 2px 3px #000000;
+                pointer-events: none;
+            }
+            @keyframes hud-pop {
+                from {
+                    transform: translateY(12px) scale(0.97);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(styleElement);
+        UIScene.stylesInjected = true;
+    }
+
+    private createHud(): void {
+        const dom = this.add.dom(0, 0);
+        dom.setOrigin(0, 0).setScrollFactor(0).setDepth(100);
+        dom.setPerspective(800);
+
+        const html: string = `
+            <div class="hud-root">
+                <div class="hud-status">
+                    <span class="hud-status__item" data-hud="level">Nível: 1</span>
+                    <span class="hud-status__item" data-hud="health">HP: 0 / 0</span>
+                    <span class="hud-status__item" data-hud="mana">MP: 0 / 0</span>
+                    <span class="hud-status__item" data-hud="experience">XP: 0 / 0</span>
+                </div>
+                <div class="hud-wave" data-hud="wave">Onda: 0/${this.totalWaves}</div>
+                <div class="hud-levelup-overlay" data-hud="overlay">
+                    <div class="hud-levelup-overlay__backdrop"></div>
+                    <div class="hud-levelup-overlay__content">
+                        <div class="hud-levelup-overlay__message">Novo nível alcançado! Distribua seus pontos.</div>
+                        <div class="hud-attribute-panel" data-hud="attribute-panel">
+                            <div>
+                                <h2>Atributos Primários</h2>
+                                <div class="hud-attribute-panel__points" data-hud="available-points">Pontos disponíveis: 0</div>
+                            </div>
+                            <div class="hud-attribute-list">
+                                ${ATTRIBUTE_DEFINITIONS.map(
+                                    definition => `
+                                        <div class="hud-attribute-row">
+                                            <span>${definition.label}: <strong data-attribute-value="${definition.key}">--</strong></span>
+                                            <button type="button" data-attribute-button data-attribute="${definition.key}" disabled>+</button>
+                                        </div>
+                                    `.trim(),
+                                ).join('')}
+                            </div>
+                            <div class="hud-derived" data-hud="derived">Derivados: --</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        dom.createFromHTML(html);
+
+        const rootElement = dom.node as HTMLElement;
+        const levelElement = this.queryHudElement(rootElement, '[data-hud="level"]');
+        const healthElement = this.queryHudElement(rootElement, '[data-hud="health"]');
+        const manaElement = this.queryHudElement(rootElement, '[data-hud="mana"]');
+        const experienceElement = this.queryHudElement(rootElement, '[data-hud="experience"]');
+        const waveElement = this.queryHudElement(rootElement, '[data-hud="wave"]');
+        const availablePointsElement = this.queryHudElement(rootElement, '[data-hud="available-points"]');
+        const derivedElement = this.queryHudElement(rootElement, '[data-hud="derived"]');
+        const attributePanel = this.queryHudElement(rootElement, '[data-hud="attribute-panel"]');
+        const overlayElement = this.queryHudElement(rootElement, '[data-hud="overlay"]');
+
+        this.statusElements = {
+            wave: waveElement,
+            level: levelElement,
+            health: healthElement,
+            mana: manaElement,
+            experience: experienceElement,
+            availablePoints: availablePointsElement,
+            derived: derivedElement,
+        };
+        this.attributePanelElement = attributePanel;
+        this.levelUpOverlayElement = overlayElement;
+
+        ATTRIBUTE_DEFINITIONS.forEach(definition => {
+            const valueSelector = `[data-attribute-value="${definition.key}"]`;
+            const buttonSelector = `button[data-attribute="${definition.key}"]`;
+            const valueElement = this.queryHudElement(rootElement, valueSelector);
+            const buttonElement = this.queryHudButton(rootElement, buttonSelector);
+            buttonElement.addEventListener('click', this.onAttributeButtonClicked);
+            this.attributeValueElements.set(definition.key, valueElement);
+            this.attributeButtons.set(definition.key, buttonElement);
+        });
+
+        this.hudContainer = dom;
+    }
+
+    private queryHudElement(root: HTMLElement, selector: string): HTMLElement {
+        const element = root.querySelector<HTMLElement>(selector);
+        if (!element) {
+            throw new Error(`Elemento HUD não encontrado: ${selector}`);
+        }
+        return element;
+    }
+
+    private queryHudButton(root: HTMLElement, selector: string): HTMLButtonElement {
+        const element = root.querySelector<HTMLButtonElement>(selector);
+        if (!element) {
+            throw new Error(`Botão HUD não encontrado: ${selector}`);
+        }
+        return element;
+    }
+
+    private updateHealthText(payload: ResourceUpdatePayload): void {
+        this.statusElements.health.textContent = `HP: ${payload.current} / ${payload.max}`;
+    }
+
+    private updateManaText(payload: ResourceUpdatePayload): void {
+        this.statusElements.mana.textContent = `MP: ${payload.current} / ${payload.max}`;
+    }
+
+    private onPlayerProgressionUpdated(payload: PlayerProgressionUpdatePayload): void {
+        this.statusElements.level.textContent = `Nível: ${payload.level}`;
+        const formattedExperience = `${this.formatNumber(payload.experience)} / ${this.formatNumber(payload.experienceToNextLevel)}`;
+        this.statusElements.experience.textContent = `XP: ${formattedExperience}`;
+        this.statusElements.availablePoints.textContent = `Pontos disponíveis: ${payload.availableAttributePoints}`;
+        this.updateAttributeValues(payload.primary);
+        this.statusElements.derived.textContent = this.formatDerivedText(payload.derived);
+        this.toggleAttributeButtons(payload.availableAttributePoints > 0);
+        this.updateLevelUpPanelVisibility(payload.availableAttributePoints);
+        this.lastAvailableAttributePoints = payload.availableAttributePoints;
     }
 
     private onWaveStarted(payload: WaveStartedEventPayload): void {
-        this.waveText.setText(this.formatWaveText(payload.waveNumber, payload.totalWaves));
+        this.statusElements.wave.textContent = this.formatWaveText(payload.waveNumber, payload.totalWaves);
     }
 
     private onWaveCleared(payload: WaveClearedEventPayload): void {
-        this.waveText.setText(this.formatWaveText(payload.waveNumber, payload.totalWaves));
+        this.statusElements.wave.textContent = this.formatWaveText(payload.waveNumber, payload.totalWaves);
     }
 
     private onAllWavesCleared(): void {
-        this.waveText.setText('Todas as ondas completas!');
+        this.statusElements.wave.textContent = 'Todas as ondas completas!';
     }
 
     private handleShutdown(): void {
         this.game.events.off('player-health-changed', this.updateHealthText, this);
+        this.game.events.off('player-mana-changed', this.updateManaText, this);
+        this.game.events.off('player-progression-updated', this.onPlayerProgressionUpdated, this);
         this.game.events.off('wave-started', this.onWaveStarted, this);
         this.game.events.off('wave-cleared', this.onWaveCleared, this);
         this.game.events.off('all-waves-cleared', this.onAllWavesCleared, this);
         this.game.events.off('player-stats-inicializados', this.onPlayerStatsInicializados, this);
+
+        this.attributeButtons.forEach(button => {
+            button.removeEventListener('click', this.onAttributeButtonClicked);
+        });
+        this.attributeButtons.clear();
+        this.attributeValueElements.clear();
+
+        if (this.hudContainer) {
+            this.hudContainer.destroy();
+        }
     }
 
     private formatWaveText(currentWave: number, totalWaves: number): string {
@@ -102,19 +396,50 @@ export class UIScene extends Scene {
     }
 
     private onPlayerStatsInicializados(stats: PlayerStats): void {
-        this.attributesText.setText(this.formatAttributesText(stats));
-        this.derivedText.setText(this.formatDerivedText(stats));
+        this.onPlayerProgressionUpdated({
+            level: stats.progressionState.level,
+            experience: stats.progressionState.experience,
+            experienceToNextLevel: stats.progressionState.experienceToNextLevel,
+            availableAttributePoints: stats.progressionState.availableAttributePoints,
+            primary: stats.primary,
+            derived: stats.derived,
+        });
+        const currentHealth = (this.game.registry.get('player-health') as number | undefined) ?? stats.derived.maxHealth;
+        this.updateHealthText({ current: currentHealth, max: stats.derived.maxHealth });
+        const currentMana = (this.game.registry.get('player-mana') as number | undefined) ?? stats.derived.maxMana;
+        this.updateManaText({ current: currentMana, max: stats.derived.maxMana });
     }
 
-    private formatAttributesText(stats: PlayerStats): string {
-        const primary = stats.primary;
-        return `Atributos: FOR ${primary.strength} | AGI ${primary.agility} | VIT ${primary.vitality} | INT ${primary.intelligence} | DES ${primary.dexterity}`;
+    private updateAttributeValues(primary: PrimaryAttributes): void {
+        ATTRIBUTE_DEFINITIONS.forEach(definition => {
+            const valueElement = this.attributeValueElements.get(definition.key);
+            if (!valueElement) {
+                return;
+            }
+            valueElement.textContent = `${primary[definition.key]}`;
+        });
     }
 
-    private formatDerivedText(stats: PlayerStats): string {
-        const derived = stats.derived;
-        const attack = stats.attack;
-        return `Derivados: HP ${derived.maxHealth} | MP ${derived.maxMana} | ATQ ${this.formatNumber(derived.physicalAttack)} | DEF ${this.formatNumber(derived.physicalDefense)} | CRIT ${this.formatNumber(derived.criticalChance)}% | ASPD ${this.formatNumber(derived.attackSpeed)}/s | DANO ${attack.damage}`;
+    private toggleAttributeButtons(canAllocate: boolean): void {
+        this.attributeButtons.forEach(button => {
+            button.disabled = !canAllocate;
+        });
+    }
+
+    private updateLevelUpPanelVisibility(availablePoints: number): void {
+        const hasPoints: boolean = availablePoints > 0;
+        const isPanelVisible: boolean = this.attributePanelElement.classList.contains('hud-attribute-panel--visible');
+        if (hasPoints && (!isPanelVisible || this.lastAvailableAttributePoints === 0)) {
+            this.attributePanelElement.classList.add('hud-attribute-panel--visible');
+            this.levelUpOverlayElement.classList.add('hud-levelup-overlay--visible');
+        } else if (!hasPoints && isPanelVisible) {
+            this.attributePanelElement.classList.remove('hud-attribute-panel--visible');
+            this.levelUpOverlayElement.classList.remove('hud-levelup-overlay--visible');
+        }
+    }
+
+    private formatDerivedText(derived: DerivedAttributes): string {
+        return `Derivados: HP ${derived.maxHealth} | MP ${derived.maxMana} | ATQ ${this.formatNumber(derived.physicalAttack)} | DEF ${this.formatNumber(derived.physicalDefense)} | CRIT ${this.formatNumber(derived.criticalChance)}% | ASPD ${this.formatNumber(derived.attackSpeed)}/s`;
     }
 
     private formatNumber(value: number): string {

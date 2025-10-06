@@ -1,20 +1,26 @@
 import { Scene, Physics } from 'phaser';
 import { HealthComponent } from '../components/HealthComponent';
+import { ConfigService } from '../config/ConfigService';
+import type { PlayerAttackConfig } from '../config/types';
 
 export class AttackSystem {
     private scene: Scene;
     private player: Physics.Arcade.Sprite;
     private attackKey: Phaser.Input.Keyboard.Key;
     private isAttacking: boolean = false;
+    private readonly attackConfig: PlayerAttackConfig;
+    private lastAttackTimestamp: number = 0;
 
     constructor(scene: Scene, player: Physics.Arcade.Sprite) {
         this.scene = scene;
         this.player = player;
         this.attackKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.attackConfig = ConfigService.getInstance().getPlayerConfig().attack;
     }
 
     public update(enemies: Physics.Arcade.Group): void {
-        if (Phaser.Input.Keyboard.JustDown(this.attackKey) && !this.isAttacking) {
+        const now = this.scene.time.now;
+        if (Phaser.Input.Keyboard.JustDown(this.attackKey) && !this.isAttacking && now >= this.lastAttackTimestamp) {
             this.executeAttack(enemies);
         }
     }
@@ -32,7 +38,7 @@ export class AttackSystem {
                 const enemy = enemySprite as Physics.Arcade.Sprite;
                 const enemyHealth = enemy.getData('health') as HealthComponent;
                 if (enemyHealth) {
-                    enemyHealth.takeDamage(25); // Dano da espada
+                    enemyHealth.takeDamage(this.attackConfig.damage);
                 }
                 // Impede múltiplos acertos no mesmo ataque
                 this.scene.physics.world.removeCollider(overlapCollider);
@@ -40,20 +46,25 @@ export class AttackSystem {
         );
 
         // Remove a hitbox após um curto período
-        this.scene.time.delayedCall(150, () => {
+        this.scene.time.delayedCall(this.attackConfig.durationMs, () => {
             hitbox.destroy();
             this.isAttacking = false;
+            this.lastAttackTimestamp = this.scene.time.now + this.attackConfig.cooldownMs;
         });
     }
-    
+
     private createHitbox(): Physics.Arcade.Sprite {
         const direction = this.player.flipX ? -1 : 1;
-        const hitboxX = this.player.x + (20 * direction);
-        const hitboxY = this.player.y;
-        
+        const offsetX = this.attackConfig.hitbox.offsetX * direction;
+        const offsetY = this.attackConfig.hitbox.offsetY ?? 0;
+        const hitboxX = this.player.x + offsetX;
+        const hitboxY = this.player.y + offsetY;
+
         const hitbox = this.scene.add.sprite(hitboxX, hitboxY, '') as Physics.Arcade.Sprite;
         this.scene.physics.world.enable(hitbox);
-        hitbox.body!.setSize(25, 25);
+        const hitboxBody = hitbox.body as Physics.Arcade.Body;
+        hitboxBody.setSize(this.attackConfig.hitbox.width, this.attackConfig.hitbox.height);
+        hitboxBody.setAllowGravity(false);
         hitbox.setVisible(false); // A hitbox é invisível
 
         return hitbox;

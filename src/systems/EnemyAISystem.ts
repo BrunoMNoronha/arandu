@@ -1,14 +1,11 @@
 import Phaser, { Physics } from 'phaser';
 import { HealthComponent } from '../components/HealthComponent';
+import { ConfigService } from '../config/ConfigService';
+import type { EnemyAISettings } from '../config/types';
 
 type EnemyState = 'patrolling' | 'chasing' | 'returning';
 
-export interface EnemyAIConfig {
-    readonly patrolRange?: number;
-    readonly detectionRadius?: number;
-    readonly patrolSpeed?: number;
-    readonly chaseSpeed?: number;
-}
+export type EnemyAIOverrides = Partial<EnemyAISettings>;
 
 export class EnemyAISystem {
     private readonly enemy: Physics.Arcade.Sprite;
@@ -17,18 +14,28 @@ export class EnemyAISystem {
     private readonly detectionRadius: number;
     private readonly patrolSpeed: number;
     private readonly chaseSpeed: number;
+    private readonly detectionRadiusSquared: number;
+    private readonly disengageRadiusSquared: number;
     private readonly originX: number;
     private state: EnemyState = 'patrolling';
     private direction: number = 1;
 
     // Mantém todas as dependências explicitadas para facilitar testes e reuso da IA.
-    constructor(enemy: Physics.Arcade.Sprite, player: Physics.Arcade.Sprite, config: EnemyAIConfig = {}) {
+    constructor(enemy: Physics.Arcade.Sprite, player: Physics.Arcade.Sprite, overrides: EnemyAIOverrides = {}) {
         this.enemy = enemy;
         this.player = player;
-        this.patrolRange = config.patrolRange ?? 64;
-        this.detectionRadius = config.detectionRadius ?? 120;
-        this.patrolSpeed = config.patrolSpeed ?? 45;
-        this.chaseSpeed = config.chaseSpeed ?? 75;
+        const defaultConfig = ConfigService.getInstance().getEnemyConfig().ai;
+        const resolvedConfig: EnemyAISettings = {
+            ...defaultConfig,
+            ...overrides
+        };
+        this.patrolRange = resolvedConfig.patrolRange;
+        this.detectionRadius = resolvedConfig.detectionRadius;
+        this.patrolSpeed = resolvedConfig.patrolSpeed;
+        this.chaseSpeed = resolvedConfig.chaseSpeed;
+        this.detectionRadiusSquared = this.detectionRadius * this.detectionRadius;
+        const disengageMultiplier = 1.2;
+        this.disengageRadiusSquared = Math.pow(this.detectionRadius * disengageMultiplier, 2);
         this.originX = enemy.x;
 
         // Define a velocidade inicial para que o inimigo já comece a patrulhar, evitando frames ociosos.
@@ -41,17 +48,13 @@ export class EnemyAISystem {
         }
 
         // Calcula a distância euclidiana entre inimigo e jogador para guiar a mudança de estado, garantindo reações naturais.
-        const distanceToPlayer = Phaser.Math.Distance.Between(
-            this.enemy.x,
-            this.enemy.y,
-            this.player.x,
-            this.player.y
-        );
-        // Alternativa mais performática: comparar distâncias ao quadrado para evitar raiz quadrada quando houver muitos inimigos.
+        const deltaX = this.enemy.x - this.player.x;
+        const deltaY = this.enemy.y - this.player.y;
+        const distanceToPlayerSquared = (deltaX * deltaX) + (deltaY * deltaY);
 
-        if (this.shouldChase(distanceToPlayer)) {
+        if (this.shouldChase(distanceToPlayerSquared)) {
             this.state = 'chasing';
-        } else if (this.state === 'chasing' && distanceToPlayer > this.detectionRadius * 1.2) {
+        } else if (this.state === 'chasing' && distanceToPlayerSquared > this.disengageRadiusSquared) {
             this.state = 'returning';
         }
 
@@ -70,10 +73,10 @@ export class EnemyAISystem {
         }
     }
 
-    private shouldChase(distanceToPlayer: number): boolean {
+    private shouldChase(distanceToPlayerSquared: number): boolean {
         // Consulta a vida do jogador para evitar perseguir alvos já derrotados, poupando processamento.
         const playerHealth = this.player.getData('health') as HealthComponent | undefined;
-        return distanceToPlayer <= this.detectionRadius && (playerHealth?.isAlive() ?? false);
+        return distanceToPlayerSquared <= this.detectionRadiusSquared && (playerHealth?.isAlive() ?? false);
     }
 
     private handlePatrol(): void {

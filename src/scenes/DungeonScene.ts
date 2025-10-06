@@ -1,24 +1,23 @@
 import { Scene, Physics, Tilemaps } from 'phaser';
 import type { Types } from 'phaser';
 import { PlayerFactory } from '../factories/PlayerFactory';
-import { EnemyFactory } from '../factories/EnemyFactory';
 import { MovementSystem } from '../systems/MovementSystem';
 import { CollisionSystem } from '../systems/CollisionSystem';
-import { EnemyAISystem } from '../systems/EnemyAISystem';
 import { AttackSystem } from '../systems/AttackSystem';
 import { DamageTextManager } from '../components/DamageTextManager';
+import { WaveManager } from '../systems/WaveManager';
 
 export class DungeonScene extends Scene {
     private player!: Physics.Arcade.Sprite;
     private enemies!: Physics.Arcade.Group;
     private movementSystem!: MovementSystem;
     private collisionSystem!: CollisionSystem;
-    private enemyAISystems: EnemyAISystem[] = [];
     private attackSystem!: AttackSystem;
     private cursors!: Types.Input.Keyboard.CursorKeys;
     private map!: Tilemaps.Tilemap;
     private wallsLayer!: Tilemaps.TilemapLayer | null;
     private damageTextManager!: DamageTextManager;
+    private waveManager!: WaveManager;
 
     constructor() {
         super('DungeonScene');
@@ -44,8 +43,6 @@ export class DungeonScene extends Scene {
         this.player = PlayerFactory.create(this, 100, 120, this.damageTextManager);
 
         this.enemies = this.physics.add.group();
-        const enemy1 = EnemyFactory.create(this, 250, 120, this.damageTextManager);
-        this.enemies.add(enemy1);
 
         if (this.wallsLayer) {
             // Mantém jogador e inimigos presos ao layout através da camada sólida.
@@ -59,10 +56,8 @@ export class DungeonScene extends Scene {
         this.collisionSystem.setupCollider(this.player, this.enemies);
         this.attackSystem = new AttackSystem(this, this.player);
 
-        this.enemies.getChildren().forEach(enemy => {
-            // Cria uma instância de IA por inimigo garantindo encapsulamento do comportamento.
-            this.enemyAISystems.push(new EnemyAISystem(enemy as Physics.Arcade.Sprite, this.player));
-        });
+        this.waveManager = new WaveManager(this, this.player, this.enemies, this.damageTextManager);
+        this.waveManager.start();
 
         // Alinha limites do mundo e câmera para oferecer navegação fluida.
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
@@ -74,6 +69,6 @@ export class DungeonScene extends Scene {
         // Atualiza cada sistema separadamente para manter responsabilidades bem definidas.
         this.movementSystem.update();
         this.attackSystem.update(this.enemies);
-        this.enemyAISystems.forEach(ai => ai.update());
+        this.waveManager.update();
     }
 }

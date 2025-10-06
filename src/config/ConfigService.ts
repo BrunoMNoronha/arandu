@@ -1,5 +1,5 @@
 import { GAME_BALANCE } from './GameBalance';
-import type { CollisionConfig, EnemyConfig, GameBalanceConfig, PlayerConfig } from './types';
+import type { CollisionConfig, EnemyConfig, GameBalanceConfig, PlayerConfig, WaveBalanceConfig } from './types';
 
 /**
  * Implementa o padrão Singleton para centralizar acesso às configurações de balanceamento.
@@ -46,5 +46,9 @@ export class ConfigService {
 
     public getCollisionConfig(): CollisionConfig {
         return this.balance.combat.collision;
+    }
+
+    public getWaveConfig(): WaveBalanceConfig {
+        return this.balance.waves;
     }
 }

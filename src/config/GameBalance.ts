@@ -1,6 +1,7 @@
 import { COLLISION_CONFIG } from './balance/combat/CollisionConfig';
 import { CHARACTER_CONFIGS, DEFAULT_CHARACTER_KEY } from './balance/characters';
 import { ENEMY_CONFIGS, DEFAULT_ENEMY_KEY } from './balance/enemies';
+import { WAVE_CONFIG } from './balance/waves';
 import type { GameBalanceConfig } from './types';
 
 /**
@@ -12,6 +13,7 @@ export const GAME_BALANCE: GameBalanceConfig = Object.freeze({
     combat: {
         collision: COLLISION_CONFIG
     },
+    waves: WAVE_CONFIG,
     defaults: {
         character: DEFAULT_CHARACTER_KEY,
         enemy: DEFAULT_ENEMY_KEY

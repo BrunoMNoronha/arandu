@@ -40,6 +40,15 @@ export type CharacterConfigMap = Readonly<Record<string, PlayerConfig>>;
 
 export type EnemyConfigMap = Readonly<Record<string, EnemyConfig>>;
 
+export interface WaveBalanceConfig {
+    readonly totalWaves: number;
+    readonly baseEnemies: number;
+    readonly enemyGrowthRate: number;
+    readonly randomEnemyVariance: number;
+    readonly spawnRadius: number;
+    readonly spawnPadding: number;
+}
+
 export interface GameBalanceDefaults {
     readonly character: string;
     readonly enemy: string;
@@ -51,5 +60,6 @@ export interface GameBalanceConfig {
     readonly combat: {
         readonly collision: CollisionConfig;
     };
+    readonly waves: WaveBalanceConfig;
     readonly defaults: GameBalanceDefaults;
 }

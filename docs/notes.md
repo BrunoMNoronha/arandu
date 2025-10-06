@@ -2,7 +2,6 @@
 #    DIÁRIO DE BORDO E ROTEIRO ESTRATÉGICO DO PROJETO ARANDÚ    #
 #################################################################
 
-**Codinome do Gem:** Arandú
 **Status Atual:** Em desenvolvimento - Fase 5
 **Data da Atualização:** 05/10/2025
 

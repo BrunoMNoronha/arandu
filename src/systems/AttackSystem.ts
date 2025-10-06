@@ -5,7 +5,7 @@ export class AttackSystem {
     private scene: Scene;
     private player: Physics.Arcade.Sprite;
     private attackKey: Phaser.Input.Keyboard.Key;
-    private isAttacking = false;
+    private isAttacking: boolean = false;
 
     constructor(scene: Scene, player: Physics.Arcade.Sprite) {
         this.scene = scene;
@@ -25,15 +25,19 @@ export class AttackSystem {
         const hitbox = this.createHitbox();
 
         // CORREÇÃO: O parâmetro 'box' foi renomeado para '_box' para indicar que não é utilizado.
-        const overlapCollider = this.scene.physics.add.overlap(hitbox, enemies, (_box, enemySprite) => {
-            const enemy = enemySprite as Physics.Arcade.Sprite;
-            const enemyHealth = enemy.getData('health') as HealthComponent;
-            if (enemyHealth) {
-                enemyHealth.takeDamage(25); // Dano da espada
+        const overlapCollider: Physics.Arcade.Collider = this.scene.physics.add.overlap(
+            hitbox,
+            enemies,
+            (_box, enemySprite) => {
+                const enemy = enemySprite as Physics.Arcade.Sprite;
+                const enemyHealth = enemy.getData('health') as HealthComponent;
+                if (enemyHealth) {
+                    enemyHealth.takeDamage(25); // Dano da espada
+                }
+                // Impede múltiplos acertos no mesmo ataque
+                this.scene.physics.world.removeCollider(overlapCollider);
             }
-            // Impede múltiplos acertos no mesmo ataque
-            this.scene.physics.world.removeCollider(overlapCollider);
-        });
+        );
 
         // Remove a hitbox após um curto período
         this.scene.time.delayedCall(150, () => {

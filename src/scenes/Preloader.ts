@@ -5,7 +5,7 @@ export class Preloader extends Scene {
         super('Preloader');
     }
 
-    preload() {
+    public preload(): void {
         // Carrega o atlas de animação do jogador
         this.load.atlas('player', 'assets/player_spritesheet.png', 'assets/player_atlas.json');
         
@@ -17,7 +17,7 @@ export class Preloader extends Scene {
         this.load.tilemapTiledJSON('dungeon_map', 'assets/dungeon_map.json');
     }
 
-    create() {
+    public create(): void {
         this.scene.start('DungeonScene');
     }
 }

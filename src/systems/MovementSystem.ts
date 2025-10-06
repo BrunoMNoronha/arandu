@@ -16,20 +16,25 @@ export class MovementSystem {
     }
 
     public update(): void {
-        this.player.setVelocity(0);
+        const input: Phaser.Math.Vector2 = new Phaser.Math.Vector2(0, 0);
 
         if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-PLAYER_SPEED);
+            input.x -= 1;
         } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(PLAYER_SPEED);
+            input.x += 1;
         }
 
         if (this.cursors.up.isDown) {
-            this.player.setVelocityY(-PLAYER_SPEED);
+            input.y -= 1;
         } else if (this.cursors.down.isDown) {
-            this.player.setVelocityY(PLAYER_SPEED);
+            input.y += 1;
         }
 
+        if (input.lengthSq() > 0) {
+            input.normalize().scale(PLAYER_SPEED);
+        }
+
+        this.player.setVelocity(input.x, input.y);
         this.animationSystem.update();
     }
 }

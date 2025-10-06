@@ -5,17 +5,78 @@ export interface HitboxConfig {
     readonly offsetY?: number;
 }
 
+export interface PrimaryAttributes {
+    readonly strength: number;
+    readonly agility: number;
+    readonly vitality: number;
+    readonly intelligence: number;
+    readonly dexterity: number;
+}
+
+export interface AttributeBaseValues {
+    readonly baseHp: number;
+    readonly baseMp: number;
+    readonly baseAttackSpeed: number;
+}
+
+export interface AttributeProgressionRange {
+    readonly min: number;
+    readonly max: number;
+}
+
+export interface AttributeProgressionConfig {
+    readonly pointsPerLevel: AttributeProgressionRange;
+}
+
+export interface PlayerAttributesConfig {
+    readonly base: PrimaryAttributes;
+    readonly baseValues: AttributeBaseValues;
+    readonly progression: AttributeProgressionConfig;
+}
+
+export interface PlayerMovementConfig {
+    readonly baseSpeed: number;
+    readonly agilityMultiplier: number;
+}
+
 export interface PlayerAttackConfig {
-    readonly damage: number;
+    readonly baseDamage: number;
     readonly hitbox: HitboxConfig;
     readonly durationMs: number;
-    readonly cooldownMs: number;
+    readonly baseCooldownMs: number;
 }
 
 export interface PlayerConfig {
-    readonly maxHealth: number;
-    readonly movementSpeed: number;
+    readonly attributes: PlayerAttributesConfig;
+    readonly movement: PlayerMovementConfig;
     readonly attack: PlayerAttackConfig;
+}
+
+export interface DerivedAttributes {
+    readonly maxHealth: number;
+    readonly maxMana: number;
+    readonly physicalAttack: number;
+    readonly magicalAttack: number;
+    readonly flee: number;
+    readonly criticalChance: number;
+    readonly physicalDefense: number;
+    readonly attackSpeed: number;
+}
+
+export interface PlayerAttackDerivedStats {
+    readonly damage: number;
+    readonly cooldownMs: number;
+    readonly durationMs: number;
+    readonly hitbox: HitboxConfig;
+    readonly criticalChance: number;
+}
+
+export interface PlayerStats {
+    readonly primary: PrimaryAttributes;
+    readonly derived: DerivedAttributes;
+    readonly attack: PlayerAttackDerivedStats;
+    readonly movementSpeed: number;
+    readonly progression: AttributeProgressionConfig;
 }
 
 export interface EnemyAISettings {

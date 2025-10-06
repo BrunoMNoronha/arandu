@@ -8,7 +8,7 @@ export class PlayerFactory {
         player.setCollideWorldBounds(true);
 
         // Anexa o HealthComponent ao Data Manager do sprite.
-        const playerConfig = ConfigService.getInstance().getPlayerConfig();
+        const playerConfig = ConfigService.getInstance().getCharacterConfig();
         player.setData('health', new HealthComponent(scene, player, playerConfig.maxHealth));
 
         // Cria as animações do jogador

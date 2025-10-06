@@ -22,12 +22,26 @@ export class ConfigService {
         return ConfigService.instance;
     }
 
-    public getPlayerConfig(): PlayerConfig {
-        return this.balance.player;
+    public getCharacterConfig(type?: string): PlayerConfig {
+        const requestedType: string = type ?? this.balance.defaults.character;
+        return this.balance.characters[requestedType] ?? this.balance.characters[this.balance.defaults.character];
     }
 
-    public getEnemyConfig(type: string = 'default'): EnemyConfig {
-        return this.balance.enemies[type] ?? this.balance.enemies.default;
+    public getPlayerConfig(type?: string): PlayerConfig {
+        return this.getCharacterConfig(type);
+    }
+
+    public listAvailableCharacters(): readonly string[] {
+        return Object.freeze([...Object.keys(this.balance.characters)]);
+    }
+
+    public getEnemyConfig(type?: string): EnemyConfig {
+        const requestedType: string = type ?? this.balance.defaults.enemy;
+        return this.balance.enemies[requestedType] ?? this.balance.enemies[this.balance.defaults.enemy];
+    }
+
+    public listAvailableEnemies(): readonly string[] {
+        return Object.freeze([...Object.keys(this.balance.enemies)]);
     }
 
     public getCollisionConfig(): CollisionConfig {

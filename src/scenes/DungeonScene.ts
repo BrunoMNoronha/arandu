@@ -22,7 +22,7 @@ export class DungeonScene extends Scene {
         super('DungeonScene');
     }
 
-    create() {
+    public create(): void {
         this.scene.launch('UIScene');
 
         this.map = this.make.tilemap({ key: 'dungeon_map' });
@@ -61,7 +61,7 @@ export class DungeonScene extends Scene {
         this.cameras.main.startFollow(this.player, true);
     }
 
-    update() {
+    public update(): void {
         this.movementSystem.update();
         this.attackSystem.update(this.enemies);
         this.enemyAISystems.forEach(ai => ai.update());

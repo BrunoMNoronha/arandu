@@ -7,7 +7,7 @@ export class UIScene extends Scene {
         super('UIScene');
     }
 
-    create() {
+    public create(): void {
         // Exibe o texto inicial de vida no canto superior esquerdo.
         this.healthText = this.add.text(10, 10, 'Vida: 100', {
             fontSize: '16px',

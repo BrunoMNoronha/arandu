@@ -1,4 +1,5 @@
 import { Scene, Physics } from 'phaser';
+import { DamageTextManager } from './DamageTextManager';
 
 // Encapsula regras de vida e feedback visual, facilitando reuso em diferentes entidades.
 export class HealthComponent {
@@ -7,13 +8,15 @@ export class HealthComponent {
     private readonly maxHealth: number;
     private _health: number;
     private damageTween: Phaser.Tweens.Tween | null = null;
+    private readonly damageTextManager?: DamageTextManager;
 
     // Recebe todas as dependências via construtor para manter o componente independente.
-    constructor(scene: Scene, entity: Physics.Arcade.Sprite, initialHealth: number) {
+    constructor(scene: Scene, entity: Physics.Arcade.Sprite, initialHealth: number, damageTextManager?: DamageTextManager) {
         this.scene = scene;
         this.entity = entity;
         this._health = initialHealth;
         this.maxHealth = initialHealth;
+        this.damageTextManager = damageTextManager;
 
         // Emite o valor inicial garantindo que UI e sistemas fiquem sincronizados desde o spawn.
         this.emitHealthChanged();
@@ -50,6 +53,7 @@ export class HealthComponent {
         this._health = Math.max(0, this._health - amount);
         this.emitHealthChanged();
         this.playDamageEffect();
+        this.spawnDamageText(amount);
 
         if (!this.isAlive()) {
             this.handleDeath();
@@ -73,6 +77,15 @@ export class HealthComponent {
                 this.entity.setAlpha(1);
             }
         });
+    }
+
+    private spawnDamageText(amount: number): void {
+        if (!this.damageTextManager) {
+            return;
+        }
+
+        const type = this.isPlayer() ? 'player' : 'enemy';
+        this.damageTextManager.showDamage(this.entity, amount, type);
     }
 
     private handleDeath(): void {

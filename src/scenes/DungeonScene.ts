@@ -6,6 +6,7 @@ import { MovementSystem } from '../systems/MovementSystem';
 import { CollisionSystem } from '../systems/CollisionSystem';
 import { EnemyAISystem } from '../systems/EnemyAISystem';
 import { AttackSystem } from '../systems/AttackSystem';
+import { DamageTextManager } from '../components/DamageTextManager';
 
 export class DungeonScene extends Scene {
     private player!: Physics.Arcade.Sprite;
@@ -17,6 +18,7 @@ export class DungeonScene extends Scene {
     private cursors!: Types.Input.Keyboard.CursorKeys;
     private map!: Tilemaps.Tilemap;
     private wallsLayer!: Tilemaps.TilemapLayer | null;
+    private damageTextManager!: DamageTextManager;
 
     constructor() {
         super('DungeonScene');
@@ -37,10 +39,12 @@ export class DungeonScene extends Scene {
             this.wallsLayer?.setCollisionByProperty({ collides: true });
         }
 
-        this.player = PlayerFactory.create(this, 100, 120);
+        this.damageTextManager = new DamageTextManager(this);
+
+        this.player = PlayerFactory.create(this, 100, 120, this.damageTextManager);
 
         this.enemies = this.physics.add.group();
-        const enemy1 = EnemyFactory.create(this, 250, 120);
+        const enemy1 = EnemyFactory.create(this, 250, 120, this.damageTextManager);
         this.enemies.add(enemy1);
 
         if (this.wallsLayer) {

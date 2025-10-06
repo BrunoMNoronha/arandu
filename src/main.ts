@@ -21,6 +21,9 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
+  dom: {
+    createContainer: true,
+  },
 };
 
 new Phaser.Game(config);

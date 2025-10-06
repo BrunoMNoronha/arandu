@@ -1,4 +1,4 @@
-import { Scene } from 'phaser';
+import Phaser, { Scene } from 'phaser';
 import { ConfigService } from '../config/ConfigService';
 import type { DerivedAttributes, PlayerStats, PrimaryAttributes } from '../config/types';
 import type { PlayerProgressionUpdatePayload } from '../systems/PlayerProgressionSystem';
@@ -67,6 +67,8 @@ export class UIScene extends Scene {
 
         this.ensureStylesInjected();
         this.createHud();
+        this.updateHudScaling(this.scale.gameSize);
+        this.scale.on('resize', this.updateHudScaling, this);
 
         const existingStats = this.game.registry.get('player-stats') as PlayerStats | undefined;
         if (existingStats) {
@@ -109,102 +111,122 @@ export class UIScene extends Scene {
                 left: 0;
                 display: flex;
                 flex-direction: column;
-                gap: 12px;
-                padding: 12px;
-                width: 100%;
+                gap: clamp(8px, 1.2vw, 16px);
+                padding: clamp(8px, 1.4vw, 18px);
+                width: min(100%, 520px);
                 pointer-events: none;
                 color: #ffffff;
                 font-family: 'Trebuchet MS', sans-serif;
                 text-shadow: 1px 1px 2px #000000;
                 box-sizing: border-box;
+                line-height: 1.35;
+                font-size: calc(16px * var(--hud-font-scale, 1));
+            }
+            .hud-top {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: clamp(8px, 1vw, 16px);
+                pointer-events: none;
             }
             .hud-status {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px 16px;
-                background: rgba(0, 0, 0, 0.55);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                border-radius: 8px;
-                padding: 10px;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: clamp(6px, 1vw, 14px);
+                background: rgba(9, 10, 15, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 12px;
+                padding: clamp(10px, 1.4vw, 16px);
                 pointer-events: auto;
+                backdrop-filter: blur(3px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
             }
             .hud-status__item {
-                min-width: 120px;
-                font-size: 14px;
+                min-width: 0;
+                font-size: clamp(13px, 1vw + 10px, 17px);
+                font-weight: 600;
+                letter-spacing: 0.02em;
             }
             .hud-wave {
-                align-self: flex-start;
-                background: rgba(0, 0, 0, 0.55);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                border-radius: 8px;
-                padding: 8px 12px;
-                font-size: 15px;
+                background: rgba(9, 10, 15, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 12px;
+                padding: clamp(8px, 1.1vw, 14px) clamp(12px, 1.6vw, 18px);
+                font-size: clamp(14px, 1.1vw + 10px, 18px);
                 pointer-events: auto;
+                backdrop-filter: blur(3px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
             }
             .hud-attribute-panel {
                 position: relative;
-                max-width: 320px;
-                background: rgba(12, 12, 12, 0.88);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 10px;
-                padding: 16px;
+                width: min(92vw, 360px);
+                background: rgba(12, 12, 18, 0.92);
+                border: 1px solid rgba(255, 255, 255, 0.22);
+                border-radius: 14px;
+                padding: clamp(16px, 2vw, 22px);
                 display: none;
                 flex-direction: column;
-                gap: 12px;
+                gap: 14px;
                 pointer-events: auto;
                 animation: hud-pop 220ms ease-out;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
             }
             .hud-attribute-panel--visible {
                 display: flex;
             }
             .hud-attribute-panel h2 {
                 margin: 0;
-                font-size: 16px;
+                font-size: clamp(16px, 1.3vw + 10px, 22px);
                 color: #ffe066;
             }
             .hud-attribute-panel__points {
-                font-size: 15px;
+                font-size: clamp(14px, 1vw + 10px, 18px);
                 color: #8aff8a;
             }
             .hud-attribute-list {
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
+                gap: clamp(8px, 1.2vw, 14px);
             }
             .hud-attribute-row {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 8px;
-                font-size: 14px;
+                gap: 12px;
+                font-size: clamp(13px, 1vw + 9px, 17px);
             }
             .hud-attribute-row button {
-                background: #27ae60;
+                background: linear-gradient(135deg, #2ecc71, #27ae60);
                 border: none;
                 color: #ffffff;
-                padding: 4px 8px;
-                border-radius: 4px;
+                padding: 6px 10px;
+                border-radius: 6px;
                 cursor: pointer;
-                transition: background 120ms ease;
+                transition: transform 120ms ease, box-shadow 120ms ease, background 160ms ease;
+                font-weight: 700;
             }
             .hud-attribute-row button:disabled {
                 background: #3d4a3f;
                 cursor: not-allowed;
-                opacity: 0.6;
+                opacity: 0.7;
+                box-shadow: none;
             }
             .hud-attribute-row button:not(:disabled):hover {
-                background: #1e874b;
+                transform: translateY(-1px);
+                box-shadow: 0 8px 14px rgba(46, 204, 113, 0.35);
             }
             .hud-derived {
-                font-size: 13px;
-                line-height: 1.4;
+                font-size: clamp(12px, 1vw + 8px, 16px);
+                line-height: 1.45;
                 color: #d5e4ff;
             }
             .hud-levelup-overlay {
                 position: absolute;
                 inset: 0;
                 display: none;
+                align-items: center;
                 justify-content: center;
+                padding: clamp(16px, 2vw, 28px);
                 pointer-events: auto;
             }
             .hud-levelup-overlay--visible {
@@ -218,18 +240,21 @@ export class UIScene extends Scene {
             }
             .hud-levelup-overlay__content {
                 position: relative;
-                margin-top: 100px;
+                z-index: 1;
+                display: flex;
+                flex-direction: column;
+                gap: clamp(16px, 2vw, 24px);
+                align-items: center;
+                text-align: center;
+                width: 100%;
+                max-width: min(92vw, 420px);
             }
             .hud-levelup-overlay__message {
-                position: absolute;
-                top: -40px;
-                left: 0;
-                right: 0;
-                text-align: center;
-                font-size: 18px;
+                font-size: clamp(16px, 1.4vw + 11px, 22px);
                 color: #ffe066;
                 text-shadow: 2px 2px 3px #000000;
                 pointer-events: none;
+                line-height: 1.4;
             }
             @keyframes hud-pop {
                 from {
@@ -239,6 +264,37 @@ export class UIScene extends Scene {
                 to {
                     transform: translateY(0) scale(1);
                     opacity: 1;
+                }
+            }
+            @media (max-width: 768px) {
+                .hud-root {
+                    width: min(100%, 420px);
+                    gap: 10px;
+                }
+                .hud-top {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .hud-wave {
+                    align-self: stretch;
+                    text-align: center;
+                }
+                .hud-levelup-overlay {
+                    align-items: flex-end;
+                }
+                .hud-levelup-overlay__content {
+                    align-items: stretch;
+                }
+            }
+            @media (max-width: 480px) {
+                .hud-root {
+                    padding: 10px;
+                }
+                .hud-status {
+                    grid-template-columns: 1fr;
+                }
+                .hud-levelup-overlay {
+                    padding-bottom: 24px;
                 }
             }
         `;
@@ -253,13 +309,15 @@ export class UIScene extends Scene {
 
         const html: string = `
             <div class="hud-root">
-                <div class="hud-status">
-                    <span class="hud-status__item" data-hud="level">Nível: 1</span>
-                    <span class="hud-status__item" data-hud="health">HP: 0 / 0</span>
-                    <span class="hud-status__item" data-hud="mana">MP: 0 / 0</span>
-                    <span class="hud-status__item" data-hud="experience">XP: 0 / 0</span>
+                <div class="hud-top">
+                    <div class="hud-status">
+                        <span class="hud-status__item" data-hud="level">Nível: 1</span>
+                        <span class="hud-status__item" data-hud="health">HP: 0 / 0</span>
+                        <span class="hud-status__item" data-hud="mana">MP: 0 / 0</span>
+                        <span class="hud-status__item" data-hud="experience">XP: 0 / 0</span>
+                    </div>
+                    <div class="hud-wave" data-hud="wave">Onda: 0/${this.totalWaves}</div>
                 </div>
-                <div class="hud-wave" data-hud="wave">Onda: 0/${this.totalWaves}</div>
                 <div class="hud-levelup-overlay" data-hud="overlay">
                     <div class="hud-levelup-overlay__backdrop"></div>
                     <div class="hud-levelup-overlay__content">
@@ -288,6 +346,7 @@ export class UIScene extends Scene {
         dom.createFromHTML(html);
 
         const rootElement = dom.node as HTMLElement;
+        rootElement.style.setProperty('--hud-font-scale', '1');
         const levelElement = this.queryHudElement(rootElement, '[data-hud="level"]');
         const healthElement = this.queryHudElement(rootElement, '[data-hud="health"]');
         const manaElement = this.queryHudElement(rootElement, '[data-hud="mana"]');
@@ -321,6 +380,26 @@ export class UIScene extends Scene {
         });
 
         this.hudContainer = dom;
+    }
+
+    private updateHudScaling(
+        gameSize: Phaser.Structs.Size,
+        _baseSize?: Phaser.Structs.Size,
+        _displaySize?: Phaser.Structs.Size,
+        _resolution?: number,
+    ): void {
+        if (!this.hudContainer) {
+            return;
+        }
+        const rootElement = this.hudContainer.node as HTMLElement;
+        const baseWidth = 1280;
+        const baseHeight = 720;
+        const widthRatio = gameSize.width / baseWidth;
+        const heightRatio = gameSize.height / baseHeight;
+        const fontScale = Phaser.Math.Clamp(Math.min(widthRatio, heightRatio), 0.75, 1.2);
+        rootElement.style.setProperty('--hud-font-scale', fontScale.toFixed(3));
+        const targetMaxWidth = Math.min(520 * fontScale, Math.max(gameSize.width - 24, 280));
+        rootElement.style.maxWidth = `${targetMaxWidth}px`;
     }
 
     private queryHudElement(root: HTMLElement, selector: string): HTMLElement {
@@ -379,6 +458,7 @@ export class UIScene extends Scene {
         this.game.events.off('wave-cleared', this.onWaveCleared, this);
         this.game.events.off('all-waves-cleared', this.onAllWavesCleared, this);
         this.game.events.off('player-stats-inicializados', this.onPlayerStatsInicializados, this);
+        this.scale.off('resize', this.updateHudScaling, this);
 
         this.attributeButtons.forEach(button => {
             button.removeEventListener('click', this.onAttributeButtonClicked);

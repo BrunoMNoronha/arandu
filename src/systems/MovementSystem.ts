@@ -1,18 +1,19 @@
 import { Physics } from 'phaser';
 import type { Types } from 'phaser';
 import { AnimationSystem } from './AnimationSystem';
-
-const PLAYER_SPEED = 100;
+import { ConfigService } from '../config/ConfigService';
 
 export class MovementSystem {
     private cursors: Types.Input.Keyboard.CursorKeys;
     private player: Physics.Arcade.Sprite;
     private animationSystem: AnimationSystem;
+    private readonly playerSpeed: number;
 
     constructor(cursors: Types.Input.Keyboard.CursorKeys, player: Physics.Arcade.Sprite) {
         this.cursors = cursors;
         this.player = player;
         this.animationSystem = new AnimationSystem(this.player);
+        this.playerSpeed = ConfigService.getInstance().getPlayerConfig().movementSpeed;
     }
 
     public update(): void {
@@ -31,7 +32,7 @@ export class MovementSystem {
         }
 
         if (input.lengthSq() > 0) {
-            input.normalize().scale(PLAYER_SPEED);
+            input.normalize().scale(this.playerSpeed);
         }
 
         this.player.setVelocity(input.x, input.y);

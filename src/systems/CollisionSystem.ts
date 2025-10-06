@@ -1,16 +1,18 @@
 import Phaser, { Scene, Physics } from 'phaser';
 import { HealthComponent } from '../components/HealthComponent';
+import { ConfigService } from '../config/ConfigService';
+import type { CollisionConfig } from '../config/types';
 
 // Gerencia colisões e dano por contato mantendo a lógica isolada da cena.
 export class CollisionSystem {
     private readonly scene: Scene;
-    private readonly collisionDamage: number = 10;
-    private readonly damageCooldown: number = 500;
+    private readonly collisionConfig: CollisionConfig;
     private nextDamageTimestamp: number = 0;
     private readonly handlePlayerEnemyOverlap: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback;
 
     constructor(scene: Scene) {
         this.scene = scene;
+        this.collisionConfig = ConfigService.getInstance().getCollisionConfig();
 
         // Função em cache evita re-alocações por frame ao lidar com overlaps frequentes.
         this.handlePlayerEnemyOverlap = (
@@ -33,12 +35,12 @@ export class CollisionSystem {
                 return;
             }
 
-            this.nextDamageTimestamp = now + this.damageCooldown;
-            playerHealth.takeDamage(this.collisionDamage);
+            this.nextDamageTimestamp = now + this.collisionConfig.cooldownMs;
+            playerHealth.takeDamage(this.collisionConfig.damage);
 
             // Aplica recuo para comunicar o dano visualmente e criar espaço para reação.
             const knockbackDirection = Math.sign(playerGameObject.x - enemyGameObject.x) || 1;
-            playerGameObject.setVelocityX(knockbackDirection * 80);
+            playerGameObject.setVelocityX(knockbackDirection * this.collisionConfig.knockbackSpeed);
         };
     }
 

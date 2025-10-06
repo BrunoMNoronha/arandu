@@ -1,5 +1,6 @@
 import { Scene, Physics } from 'phaser';
 import { HealthComponent } from '../components/HealthComponent';
+import { ConfigService } from '../config/ConfigService';
 
 export class PlayerFactory {
     public static create(scene: Scene, x: number, y: number): Physics.Arcade.Sprite {
@@ -7,7 +8,8 @@ export class PlayerFactory {
         player.setCollideWorldBounds(true);
 
         // Anexa o HealthComponent ao Data Manager do sprite.
-        player.setData('health', new HealthComponent(scene, player, 100));
+        const playerConfig = ConfigService.getInstance().getPlayerConfig();
+        player.setData('health', new HealthComponent(scene, player, playerConfig.maxHealth));
 
         // Cria as animações do jogador
         scene.anims.create({

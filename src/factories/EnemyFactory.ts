@@ -1,5 +1,6 @@
 import { Scene, Physics } from 'phaser';
 import { HealthComponent } from '../components/HealthComponent';
+import { ConfigService } from '../config/ConfigService';
 
 export class EnemyFactory {
     /**
@@ -14,7 +15,8 @@ export class EnemyFactory {
         enemy.setCollideWorldBounds(true);
 
         // Anexa o HealthComponent ao Data Manager do sprite.
-        enemy.setData('health', new HealthComponent(scene, enemy, 30));
+        const enemyConfig = ConfigService.getInstance().getEnemyConfig();
+        enemy.setData('health', new HealthComponent(scene, enemy, enemyConfig.maxHealth));
 
         return enemy;
     }

@@ -22,6 +22,10 @@ export const WARRIOR_CONFIG: PlayerConfig = Object.freeze({
                 min: 3,
                 max: 5,
             },
+            experience: {
+                baseExperienceToLevel: 100,
+                growthRate: 1.35,
+            },
         },
     },
     movement: {

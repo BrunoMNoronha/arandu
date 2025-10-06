@@ -3,6 +3,7 @@ import type {
     DerivedAttributes,
     PlayerAttackDerivedStats,
     PlayerConfig,
+    PlayerProgressionState,
     PlayerStats,
     PrimaryAttributes,
 } from '../../config/types';
@@ -26,8 +27,14 @@ export class AttributeCalculator {
         return AttributeCalculator.instance;
     }
 
-    public computePlayerStats(config: PlayerConfig): PlayerStats {
-        const primary: PrimaryAttributes = { ...config.attributes.base };
+    public computePlayerStats(
+        config: PlayerConfig,
+        primaryOverrides?: PrimaryAttributes,
+        progressionStateOverrides?: PlayerProgressionState
+    ): PlayerStats {
+        const primary: PrimaryAttributes = primaryOverrides
+            ? { ...primaryOverrides }
+            : { ...config.attributes.base };
         const derived: DerivedAttributes = this.computeDerivedAttributes(primary, config.attributes.baseValues);
         const attack: PlayerAttackDerivedStats = this.computeAttackStats(config, derived);
         const frozenAttack: PlayerAttackDerivedStats = Object.freeze({
@@ -35,6 +42,14 @@ export class AttributeCalculator {
             hitbox: Object.freeze({ ...attack.hitbox }),
         });
         const movementSpeed: number = this.computeMovementSpeed(config, primary);
+        const progressionState: PlayerProgressionState = progressionStateOverrides
+            ? { ...progressionStateOverrides }
+            : {
+                  level: 1,
+                  experience: 0,
+                  experienceToNextLevel: config.attributes.progression.experience.baseExperienceToLevel,
+                  availableAttributePoints: 0,
+              };
 
         return Object.freeze({
             primary: Object.freeze(primary),
@@ -43,7 +58,9 @@ export class AttributeCalculator {
             movementSpeed,
             progression: Object.freeze({
                 pointsPerLevel: Object.freeze({ ...config.attributes.progression.pointsPerLevel }),
+                experience: Object.freeze({ ...config.attributes.progression.experience }),
             }),
+            progressionState: Object.freeze(progressionState),
         });
     }
 

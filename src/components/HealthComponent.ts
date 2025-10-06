@@ -6,7 +6,7 @@ import type { DamageTextOptions } from './DamageTextManager';
 export class HealthComponent {
     private readonly scene: Scene;
     private readonly entity: Physics.Arcade.Sprite;
-    private readonly maxHealth: number;
+    private maxHealth: number;
     private _health: number;
     private damageTween: Phaser.Tweens.Tween | null = null;
     private readonly damageTextManager?: DamageTextManager;
@@ -101,6 +101,13 @@ export class HealthComponent {
             this.entity.setVelocity(0, 0);
         }
 
+        if (!this.isPlayer()) {
+            const xpReward = this.entity.getData('xpReward');
+            if (typeof xpReward === 'number') {
+                this.scene.game.events.emit('enemy-defeated', { xpReward });
+            }
+        }
+
         // Executa fade-out suave que reforça visualmente a eliminação do inimigo.
         this.scene.add.tween({
             targets: this.entity,
@@ -112,14 +119,27 @@ export class HealthComponent {
         });
     }
 
+    public updateMaxHealth(newMaxHealth: number, refill: boolean = true): void {
+        if (newMaxHealth <= 0) {
+            return;
+        }
+
+        const currentRatio: number = this.maxHealth > 0 ? this._health / this.maxHealth : 1;
+        this.maxHealth = newMaxHealth;
+        this._health = refill ? newMaxHealth : Math.max(0, Math.round(newMaxHealth * currentRatio));
+        this.emitHealthChanged();
+    }
+
     private emitHealthChanged(): void {
         if (!this.isPlayer()) {
             return;
         }
 
         // Mantém o HUD atualizado via registry e eventos globais.
-        this.scene.game.registry.set('player-health', this._health);
-        this.scene.game.events.emit('player-health-changed', this._health);
+        const payload = { current: this._health, max: this.maxHealth };
+        this.scene.game.registry.set('player-health', payload.current);
+        this.scene.game.registry.set('player-max-health', payload.max);
+        this.scene.game.events.emit('player-health-changed', payload);
     }
 
     private isPlayer(): boolean {

@@ -13,7 +13,7 @@ export class MovementSystem {
         this.cursors = cursors;
         this.player = player;
         this.animationSystem = new AnimationSystem(this.player);
-        this.playerSpeed = ConfigService.getInstance().getPlayerConfig().movementSpeed;
+        this.playerSpeed = ConfigService.getInstance().getCharacterConfig().movementSpeed;
     }
 
     public update(): void {

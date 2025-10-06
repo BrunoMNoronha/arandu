@@ -36,10 +36,20 @@ export interface CollisionConfig {
     readonly cooldownMs: number;
 }
 
+export type CharacterConfigMap = Readonly<Record<string, PlayerConfig>>;
+
+export type EnemyConfigMap = Readonly<Record<string, EnemyConfig>>;
+
+export interface GameBalanceDefaults {
+    readonly character: string;
+    readonly enemy: string;
+}
+
 export interface GameBalanceConfig {
-    readonly player: PlayerConfig;
-    readonly enemies: Record<string, EnemyConfig>;
+    readonly characters: CharacterConfigMap;
+    readonly enemies: EnemyConfigMap;
     readonly combat: {
         readonly collision: CollisionConfig;
     };
+    readonly defaults: GameBalanceDefaults;
 }

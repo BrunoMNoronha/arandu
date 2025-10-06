@@ -15,7 +15,7 @@ export class AttackSystem {
         this.scene = scene;
         this.player = player;
         this.attackKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        this.attackConfig = ConfigService.getInstance().getPlayerConfig().attack;
+        this.attackConfig = ConfigService.getInstance().getCharacterConfig().attack;
     }
 
     public update(enemies: Physics.Arcade.Group): void {

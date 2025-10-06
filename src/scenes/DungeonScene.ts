@@ -38,6 +38,10 @@ export class DungeonScene extends Scene {
             this.wallsLayer?.setCollisionByProperty({ collides: true });
         }
 
+        // Alinha limites do mundo e câmera imediatamente após carregar o mapa para manter coerência com os sistemas dependentes.
+        this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+        this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+
         this.damageTextManager = new DamageTextManager(this);
 
         this.player = PlayerFactory.create(this, 100, 120, this.damageTextManager);
@@ -59,9 +63,6 @@ export class DungeonScene extends Scene {
         this.waveManager = new WaveManager(this, this.player, this.enemies, this.damageTextManager);
         this.waveManager.start();
 
-        // Alinha limites do mundo e câmera para oferecer navegação fluida.
-        this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
-        this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.startFollow(this.player, true);
     }
 

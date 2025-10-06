@@ -1,19 +1,21 @@
 import { Physics } from 'phaser';
 import type { Types } from 'phaser';
 import { AnimationSystem } from './AnimationSystem';
-import { ConfigService } from '../config/ConfigService';
+import type { PlayerStats } from '../config/types';
 
 export class MovementSystem {
     private cursors: Types.Input.Keyboard.CursorKeys;
     private player: Physics.Arcade.Sprite;
     private animationSystem: AnimationSystem;
+    private readonly playerStats: PlayerStats;
     private readonly playerSpeed: number;
 
     constructor(cursors: Types.Input.Keyboard.CursorKeys, player: Physics.Arcade.Sprite) {
         this.cursors = cursors;
         this.player = player;
         this.animationSystem = new AnimationSystem(this.player);
-        this.playerSpeed = ConfigService.getInstance().getCharacterConfig().movementSpeed;
+        this.playerStats = this.extractStats(player);
+        this.playerSpeed = this.playerStats.movementSpeed;
     }
 
     public update(): void {
@@ -37,5 +39,14 @@ export class MovementSystem {
 
         this.player.setVelocity(input.x, input.y);
         this.animationSystem.update();
+    }
+
+    private extractStats(player: Physics.Arcade.Sprite): PlayerStats {
+        const stats = player.getData('stats') as PlayerStats | undefined;
+        if (!stats) {
+            throw new Error('PlayerStats não inicializados no sprite do jogador.');
+        }
+
+        return stats;
     }
 }

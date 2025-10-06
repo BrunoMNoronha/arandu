@@ -1,5 +1,6 @@
 import { Scene, Physics } from 'phaser';
 import { DamageTextManager } from './DamageTextManager';
+import type { DamageTextOptions } from './DamageTextManager';
 
 // Encapsula regras de vida e feedback visual, facilitando reuso em diferentes entidades.
 export class HealthComponent {
@@ -45,7 +46,7 @@ export class HealthComponent {
     }
 
     // Processa dano garantindo que não ultrapasse os limites configurados.
-    public takeDamage(amount: number): void {
+    public takeDamage(amount: number, options: DamageTextOptions = {}): void {
         if (amount <= 0 || !this.isAlive()) {
             return;
         }
@@ -53,7 +54,7 @@ export class HealthComponent {
         this._health = Math.max(0, this._health - amount);
         this.emitHealthChanged();
         this.playDamageEffect();
-        this.spawnDamageText(amount);
+        this.spawnDamageText(amount, options);
 
         if (!this.isAlive()) {
             this.handleDeath();
@@ -79,13 +80,13 @@ export class HealthComponent {
         });
     }
 
-    private spawnDamageText(amount: number): void {
+    private spawnDamageText(amount: number, options: DamageTextOptions = {}): void {
         if (!this.damageTextManager) {
             return;
         }
 
         const type = this.isPlayer() ? 'player' : 'enemy';
-        this.damageTextManager.showDamage(this.entity, amount, type);
+        this.damageTextManager.showDamage(this.entity, amount, type, options);
     }
 
     private handleDeath(): void {

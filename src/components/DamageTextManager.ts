@@ -5,6 +5,15 @@ type DamageTextStyle = {
     readonly stroke: string;
 };
 
+type DamagePalette = {
+    readonly normal: DamageTextStyle;
+    readonly critical: DamageTextStyle;
+};
+
+export type DamageTextOptions = {
+    readonly critical?: boolean;
+};
+
 /**
  * Gera textos flutuantes para comunicar dano diretamente na cena.
  * Utiliza pooling para evitar alocações excessivas em cenários com muitos acertos.
@@ -12,20 +21,27 @@ type DamageTextStyle = {
 export class DamageTextManager {
     private readonly scene: Scene;
     private readonly pool: Phaser.GameObjects.Group;
-    private readonly styles: Record<'player' | 'enemy', DamageTextStyle>;
+    private readonly styles: Record<'player' | 'enemy', DamagePalette>;
 
     constructor(scene: Scene) {
         this.scene = scene;
         this.pool = this.scene.add.group({ classType: Phaser.GameObjects.Text });
         this.styles = {
-            player: { fill: '#ffe066', stroke: '#2f2f2f' },
-            enemy: { fill: '#ff6b6b', stroke: '#1f1f1f' },
+            player: {
+                normal: { fill: '#ffe066', stroke: '#2f2f2f' },
+                critical: { fill: '#fff3bf', stroke: '#2f2f2f' },
+            },
+            enemy: {
+                normal: { fill: '#ff6b6b', stroke: '#1f1f1f' },
+                critical: { fill: '#ffd93d', stroke: '#2f2f2f' },
+            },
         };
     }
 
-    public showDamage(target: Physics.Arcade.Sprite, amount: number, type: 'player' | 'enemy'): void {
+    public showDamage(target: Physics.Arcade.Sprite, amount: number, type: 'player' | 'enemy', options: DamageTextOptions = {}): void {
         const text = this.acquireText();
-        const style = this.styles[type];
+        const palette = this.styles[type];
+        const style = options.critical ? palette.critical : palette.normal;
 
         text.setText(Math.round(amount).toString());
         text.setPosition(target.x, target.y - target.displayHeight * 0.75);

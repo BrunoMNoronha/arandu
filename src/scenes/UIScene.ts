@@ -27,6 +27,71 @@ const ATTRIBUTE_DEFINITIONS: ReadonlyArray<{ key: keyof PrimaryAttributes; label
 ];
 
 type AttributeKey = (typeof ATTRIBUTE_DEFINITIONS)[number]['key'];
+type ResourceKind = 'level' | 'health' | 'mana' | 'experience';
+
+interface HudResourceBarOptions {
+    readonly anchor: HTMLElement;
+    readonly kind: ResourceKind;
+    readonly label: string;
+}
+
+class HudResourceBar {
+    private static clampRatio(value: number): number {
+        if (Number.isNaN(value) || !Number.isFinite(value)) {
+            return 0;
+        }
+        return Math.min(Math.max(value, 0), 1);
+    }
+
+    private readonly rootElement: HTMLDivElement;
+    private readonly valueElement: HTMLSpanElement;
+
+    public constructor(options: HudResourceBarOptions) {
+        const rootElement: HTMLDivElement = document.createElement('div');
+        rootElement.classList.add('hud-resource', `hud-resource--${options.kind}`);
+        rootElement.style.setProperty('--resource-ratio', '0');
+
+        const headerElement: HTMLDivElement = document.createElement('div');
+        headerElement.classList.add('hud-resource__header');
+
+        const labelElement: HTMLSpanElement = document.createElement('span');
+        labelElement.classList.add('hud-resource__label');
+        labelElement.textContent = options.label;
+
+        const valueElement: HTMLSpanElement = document.createElement('span');
+        valueElement.classList.add('hud-resource__value');
+        valueElement.textContent = '--';
+
+        headerElement.append(labelElement, valueElement);
+
+        const trackElement: HTMLDivElement = document.createElement('div');
+        trackElement.classList.add('hud-resource__track');
+
+        const fillElement: HTMLDivElement = document.createElement('div');
+        fillElement.classList.add('hud-resource__fill');
+        trackElement.append(fillElement);
+
+        rootElement.append(headerElement, trackElement);
+
+        options.anchor.replaceChildren(rootElement);
+
+        this.rootElement = rootElement;
+        this.valueElement = valueElement;
+    }
+
+    public setValue(current: number, max: number, displayText?: string): void {
+        const ratio: number = max > 0 ? HudResourceBar.clampRatio(current / max) : 0;
+        this.rootElement.style.setProperty('--resource-ratio', ratio.toFixed(4));
+        const text: string = displayText ?? `${Math.max(0, Math.floor(current))} / ${Math.max(0, Math.floor(max))}`;
+        this.valueElement.textContent = text;
+    }
+
+    public setLevel(level: number, displayText?: string): void {
+        const text: string = displayText ?? `${Math.max(0, Math.floor(level))}`;
+        this.rootElement.style.setProperty('--resource-ratio', '1');
+        this.valueElement.textContent = text;
+    }
+}
 
 export class UIScene extends Scene {
     private static stylesInjected: boolean = false;
@@ -35,13 +100,10 @@ export class UIScene extends Scene {
     private hudContainer!: Phaser.GameObjects.DOMElement;
     private statusElements!: {
         readonly wave: HTMLElement;
-        readonly level: HTMLElement;
-        readonly health: HTMLElement;
-        readonly mana: HTMLElement;
-        readonly experience: HTMLElement;
         readonly availablePoints: HTMLElement;
         readonly derived: HTMLElement;
     };
+    private resourceBars!: Map<ResourceKind, HudResourceBar>;
     private readonly attributeValueElements: Map<AttributeKey, HTMLElement> = new Map();
     private readonly attributeButtons: Map<AttributeKey, HTMLButtonElement> = new Map();
     private attributePanelElement!: HTMLElement;
@@ -146,6 +208,76 @@ export class UIScene extends Scene {
                 font-size: clamp(13px, 1vw + 10px, 17px);
                 font-weight: 600;
                 letter-spacing: 0.02em;
+            }
+            .hud-resource {
+                --resource-ratio: 0;
+                --hud-resource-track-height: calc(12px * var(--hud-font-scale, 1));
+                --hud-resource-fill: linear-gradient(135deg, #4dabf7, #1c7ed6);
+                --hud-resource-glow: 0 0 10px rgba(76, 154, 255, 0.4);
+                display: flex;
+                flex-direction: column;
+                gap: clamp(6px, 0.8vw, 10px);
+                padding: clamp(8px, 1.1vw, 12px);
+                background: rgba(17, 21, 32, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 10px;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 12px rgba(0, 0, 0, 0.35);
+            }
+            .hud-resource__header {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            .hud-resource__label {
+                font-size: clamp(12px, 0.8vw + 8px, 16px);
+                color: rgba(255, 255, 255, 0.88);
+            }
+            .hud-resource__label::after {
+                content: ':';
+                margin-left: 4px;
+                color: rgba(255, 255, 255, 0.6);
+            }
+            .hud-resource__value {
+                font-size: clamp(12px, 0.8vw + 8px, 16px);
+                font-weight: 700;
+                color: #ffffff;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            }
+            .hud-resource__track {
+                position: relative;
+                width: 100%;
+                height: var(--hud-resource-track-height, 14px);
+                border-radius: 999px;
+                background: linear-gradient(135deg, rgba(17, 21, 32, 0.9), rgba(11, 13, 20, 0.8));
+                overflow: hidden;
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+            }
+            .hud-resource__fill {
+                width: calc(var(--resource-ratio, 0) * 100%);
+                height: 100%;
+                border-radius: inherit;
+                background: var(--hud-resource-fill);
+                box-shadow: var(--hud-resource-glow);
+                transition: width 160ms ease-out;
+            }
+            .hud-resource--level {
+                --hud-resource-fill: linear-gradient(135deg, #ffe066, #f0b429);
+                --hud-resource-glow: 0 0 14px rgba(255, 224, 102, 0.35);
+            }
+            .hud-resource--health {
+                --hud-resource-fill: linear-gradient(135deg, #ff6b6b, #c92a2a);
+                --hud-resource-glow: 0 0 14px rgba(255, 107, 107, 0.4);
+            }
+            .hud-resource--mana {
+                --hud-resource-fill: linear-gradient(135deg, #74c0fc, #4dabf7);
+                --hud-resource-glow: 0 0 14px rgba(116, 192, 252, 0.4);
+            }
+            .hud-resource--experience {
+                --hud-resource-fill: linear-gradient(135deg, #b197fc, #845ef7);
+                --hud-resource-glow: 0 0 14px rgba(180, 151, 252, 0.4);
             }
             .hud-wave {
                 background: rgba(9, 10, 15, 0.7);
@@ -311,10 +443,10 @@ export class UIScene extends Scene {
             <div class="hud-root">
                 <div class="hud-top">
                     <div class="hud-status">
-                        <span class="hud-status__item" data-hud="level">Nível: 1</span>
-                        <span class="hud-status__item" data-hud="health">HP: 0 / 0</span>
-                        <span class="hud-status__item" data-hud="mana">MP: 0 / 0</span>
-                        <span class="hud-status__item" data-hud="experience">XP: 0 / 0</span>
+                        <div class="hud-status__item" data-hud-resource="level"></div>
+                        <div class="hud-status__item" data-hud-resource="health"></div>
+                        <div class="hud-status__item" data-hud-resource="mana"></div>
+                        <div class="hud-status__item" data-hud-resource="experience"></div>
                     </div>
                     <div class="hud-wave" data-hud="wave">Onda: 0/${this.totalWaves}</div>
                 </div>
@@ -347,27 +479,38 @@ export class UIScene extends Scene {
 
         const rootElement = dom.node as HTMLElement;
         rootElement.style.setProperty('--hud-font-scale', '1');
-        const levelElement = this.queryHudElement(rootElement, '[data-hud="level"]');
-        const healthElement = this.queryHudElement(rootElement, '[data-hud="health"]');
-        const manaElement = this.queryHudElement(rootElement, '[data-hud="mana"]');
-        const experienceElement = this.queryHudElement(rootElement, '[data-hud="experience"]');
         const waveElement = this.queryHudElement(rootElement, '[data-hud="wave"]');
         const availablePointsElement = this.queryHudElement(rootElement, '[data-hud="available-points"]');
         const derivedElement = this.queryHudElement(rootElement, '[data-hud="derived"]');
         const attributePanel = this.queryHudElement(rootElement, '[data-hud="attribute-panel"]');
         const overlayElement = this.queryHudElement(rootElement, '[data-hud="overlay"]');
 
+        const levelAnchor = this.queryHudElement(rootElement, '[data-hud-resource="level"]');
+        const healthAnchor = this.queryHudElement(rootElement, '[data-hud-resource="health"]');
+        const manaAnchor = this.queryHudElement(rootElement, '[data-hud-resource="mana"]');
+        const experienceAnchor = this.queryHudElement(rootElement, '[data-hud-resource="experience"]');
+
         this.statusElements = {
             wave: waveElement,
-            level: levelElement,
-            health: healthElement,
-            mana: manaElement,
-            experience: experienceElement,
             availablePoints: availablePointsElement,
             derived: derivedElement,
         };
         this.attributePanelElement = attributePanel;
         this.levelUpOverlayElement = overlayElement;
+
+        this.resourceBars = new Map<ResourceKind, HudResourceBar>();
+        this.resourceBars.set('level', new HudResourceBar({ anchor: levelAnchor, kind: 'level', label: 'Nível' }));
+        this.resourceBars.set('health', new HudResourceBar({ anchor: healthAnchor, kind: 'health', label: 'HP' }));
+        this.resourceBars.set('mana', new HudResourceBar({ anchor: manaAnchor, kind: 'mana', label: 'MP' }));
+        this.resourceBars.set(
+            'experience',
+            new HudResourceBar({ anchor: experienceAnchor, kind: 'experience', label: 'XP' }),
+        );
+
+        this.resourceBars.get('level')?.setLevel(1);
+        this.resourceBars.get('health')?.setValue(0, 0, '0 / 0');
+        this.resourceBars.get('mana')?.setValue(0, 0, '0 / 0');
+        this.resourceBars.get('experience')?.setValue(0, 0, '0 / 0');
 
         ATTRIBUTE_DEFINITIONS.forEach(definition => {
             const valueSelector = `[data-attribute-value="${definition.key}"]`;
@@ -398,6 +541,8 @@ export class UIScene extends Scene {
         const heightRatio = gameSize.height / baseHeight;
         const fontScale = Phaser.Math.Clamp(Math.min(widthRatio, heightRatio), 0.75, 1.2);
         rootElement.style.setProperty('--hud-font-scale', fontScale.toFixed(3));
+        const trackHeight = Phaser.Math.Clamp(12 * fontScale, 8, 18);
+        rootElement.style.setProperty('--hud-resource-track-height', `${trackHeight.toFixed(2)}px`);
         const targetMaxWidth = Math.min(520 * fontScale, Math.max(gameSize.width - 24, 280));
         rootElement.style.maxWidth = `${targetMaxWidth}px`;
     }
@@ -418,18 +563,37 @@ export class UIScene extends Scene {
         return element;
     }
 
+    private getResourceBar(kind: ResourceKind): HudResourceBar | undefined {
+        return this.resourceBars?.get(kind);
+    }
+
     private updateHealthText(payload: ResourceUpdatePayload): void {
-        this.statusElements.health.textContent = `HP: ${payload.current} / ${payload.max}`;
+        const healthBar = this.getResourceBar('health');
+        if (!healthBar) {
+            return;
+        }
+        const displayText: string = `${this.formatNumber(payload.current)} / ${this.formatNumber(payload.max)}`;
+        healthBar.setValue(payload.current, payload.max, displayText);
     }
 
     private updateManaText(payload: ResourceUpdatePayload): void {
-        this.statusElements.mana.textContent = `MP: ${payload.current} / ${payload.max}`;
+        const manaBar = this.getResourceBar('mana');
+        if (!manaBar) {
+            return;
+        }
+        const displayText: string = `${this.formatNumber(payload.current)} / ${this.formatNumber(payload.max)}`;
+        manaBar.setValue(payload.current, payload.max, displayText);
     }
 
     private onPlayerProgressionUpdated(payload: PlayerProgressionUpdatePayload): void {
-        this.statusElements.level.textContent = `Nível: ${payload.level}`;
-        const formattedExperience = `${this.formatNumber(payload.experience)} / ${this.formatNumber(payload.experienceToNextLevel)}`;
-        this.statusElements.experience.textContent = `XP: ${formattedExperience}`;
+        this.getResourceBar('level')?.setLevel(payload.level);
+        const experienceBar = this.getResourceBar('experience');
+        if (experienceBar) {
+            const formattedExperience: string = `${this.formatNumber(payload.experience)} / ${this.formatNumber(
+                payload.experienceToNextLevel,
+            )}`;
+            experienceBar.setValue(payload.experience, payload.experienceToNextLevel, formattedExperience);
+        }
         this.statusElements.availablePoints.textContent = `Pontos disponíveis: ${payload.availableAttributePoints}`;
         this.updateAttributeValues(payload.primary);
         this.statusElements.derived.textContent = this.formatDerivedText(payload.derived);
@@ -465,6 +629,8 @@ export class UIScene extends Scene {
         });
         this.attributeButtons.clear();
         this.attributeValueElements.clear();
+
+        this.resourceBars?.clear();
 
         if (this.hudContainer) {
             this.hudContainer.destroy();

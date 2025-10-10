@@ -194,7 +194,7 @@ export class UIScene extends Scene {
             }
             .hud-status {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
                 gap: clamp(6px, 1vw, 14px);
                 background: rgba(9, 10, 15, 0.7);
                 border: 1px solid rgba(255, 255, 255, 0.16);
@@ -403,6 +403,9 @@ export class UIScene extends Scene {
                     width: min(100%, 420px);
                     gap: 10px;
                 }
+                .hud-status {
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                }
                 .hud-top {
                     flex-direction: column;
                     align-items: stretch;
@@ -423,7 +426,7 @@ export class UIScene extends Scene {
                     padding: 10px;
                 }
                 .hud-status {
-                    grid-template-columns: 1fr;
+                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                 }
                 .hud-levelup-overlay {
                     padding-bottom: 24px;

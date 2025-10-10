@@ -2,9 +2,27 @@ import { Physics } from 'phaser';
 
 export class AnimationSystem {
     private entity: Physics.Arcade.Sprite;
+    private baseMovementSpeed: number | null = null;
 
     constructor(entity: Physics.Arcade.Sprite) {
         this.entity = entity;
+    }
+
+    public setBaseMovementSpeed(speed: number): void {
+        this.baseMovementSpeed = speed;
+    }
+
+    public onMovementSpeedChanged(newSpeed: number): void {
+        if (!this.entity.anims) {
+            return;
+        }
+
+        if (!this.baseMovementSpeed || this.baseMovementSpeed <= 0) {
+            this.baseMovementSpeed = newSpeed;
+        }
+
+        const normalizedSpeed: number = Math.max(0.1, newSpeed / this.baseMovementSpeed);
+        this.entity.anims.timeScale = normalizedSpeed;
     }
 
     public update(): void {

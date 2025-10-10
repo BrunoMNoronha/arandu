@@ -171,6 +171,7 @@ export class UIScene extends Scene {
                 position: absolute;
                 top: 0;
                 left: 0;
+                --hud-resource-track-height: calc(12px * var(--hud-font-scale, 1));
                 display: flex;
                 flex-direction: column;
                 gap: clamp(8px, 1.2vw, 16px);
@@ -211,7 +212,6 @@ export class UIScene extends Scene {
             }
             .hud-resource {
                 --resource-ratio: 0;
-                --hud-resource-track-height: calc(12px * var(--hud-font-scale, 1));
                 --hud-resource-fill: linear-gradient(135deg, #4dabf7, #1c7ed6);
                 --hud-resource-glow: 0 0 10px rgba(76, 154, 255, 0.4);
                 display: flex;
@@ -249,7 +249,7 @@ export class UIScene extends Scene {
             .hud-resource__track {
                 position: relative;
                 width: 100%;
-                height: var(--hud-resource-track-height, 14px);
+                height: var(--hud-resource-track-height, calc(12px * var(--hud-font-scale, 1)));
                 border-radius: 999px;
                 background: linear-gradient(135deg, rgba(17, 21, 32, 0.9), rgba(11, 13, 20, 0.8));
                 overflow: hidden;

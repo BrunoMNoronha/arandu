@@ -1,21 +1,30 @@
-import { Physics } from 'phaser';
+import Phaser, { Physics } from 'phaser';
 import type { Types } from 'phaser';
 import { AnimationSystem } from './AnimationSystem';
 import type { PlayerStats } from '../config/types';
+import type { PlayerProgressionUpdatePayload } from './PlayerProgressionSystem';
 
 export class MovementSystem {
     private cursors: Types.Input.Keyboard.CursorKeys;
     private player: Physics.Arcade.Sprite;
     private animationSystem: AnimationSystem;
-    private readonly playerStats: PlayerStats;
-    private readonly playerSpeed: number;
+    private currentSpeed: number;
+    private readonly baseSpeed: number;
+    private readonly progressionHandler: (payload: PlayerProgressionUpdatePayload) => void;
+    private sceneEvents: Phaser.Events.EventEmitter | null = null;
 
     constructor(cursors: Types.Input.Keyboard.CursorKeys, player: Physics.Arcade.Sprite) {
         this.cursors = cursors;
         this.player = player;
         this.animationSystem = new AnimationSystem(this.player);
-        this.playerStats = this.extractStats(player);
-        this.playerSpeed = this.playerStats.movementSpeed;
+        const initialStats: PlayerStats = this.extractStats(player);
+        this.baseSpeed = initialStats.movementSpeed;
+        this.currentSpeed = initialStats.movementSpeed;
+        this.animationSystem.setBaseMovementSpeed(this.baseSpeed);
+        this.animationSystem.onMovementSpeedChanged(this.currentSpeed);
+        this.progressionHandler = this.handleProgressionUpdated.bind(this);
+        this.registerProgressionListener();
+        this.registerSceneLifecycleCleanup();
     }
 
     public update(): void {
@@ -34,7 +43,7 @@ export class MovementSystem {
         }
 
         if (input.lengthSq() > 0) {
-            input.normalize().scale(this.playerSpeed);
+            input.normalize().scale(this.currentSpeed);
         }
 
         this.player.setVelocity(input.x, input.y);
@@ -48,5 +57,37 @@ export class MovementSystem {
         }
 
         return stats;
+    }
+
+    private handleProgressionUpdated(_: PlayerProgressionUpdatePayload): void {
+        this.currentSpeed = this.extractStats(this.player).movementSpeed;
+        this.animationSystem.onMovementSpeedChanged(this.currentSpeed);
+    }
+
+    private registerProgressionListener(): void {
+        const scene = this.player.scene;
+        if (!scene) {
+            return;
+        }
+
+        this.sceneEvents = scene.game.events;
+        this.sceneEvents.on('player-progression-updated', this.progressionHandler);
+    }
+
+    private registerSceneLifecycleCleanup(): void {
+        const scene = this.player.scene;
+        if (!scene) {
+            return;
+        }
+
+        scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.destroy, this);
+        scene.events.once(Phaser.Scenes.Events.DESTROY, this.destroy, this);
+    }
+
+    public destroy(): void {
+        if (this.sceneEvents) {
+            this.sceneEvents.off('player-progression-updated', this.progressionHandler);
+            this.sceneEvents = null;
+        }
     }
 }

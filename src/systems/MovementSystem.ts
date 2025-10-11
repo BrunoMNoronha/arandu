@@ -2,6 +2,7 @@ import Phaser, { Physics } from 'phaser';
 import type { Types } from 'phaser';
 import { AnimationSystem } from './AnimationSystem';
 import type { PlayerStats } from '../config/types';
+import { getRequiredPlayerStats } from './utils/getRequiredPlayerStats';
 import type { PlayerProgressionUpdatePayload } from './PlayerProgressionSystem';
 
 export class MovementSystem {
@@ -17,7 +18,7 @@ export class MovementSystem {
         this.cursors = cursors;
         this.player = player;
         this.animationSystem = new AnimationSystem(this.player);
-        const initialStats: PlayerStats = this.extractStats(player);
+        const initialStats: PlayerStats = getRequiredPlayerStats(player);
         this.baseSpeed = initialStats.movementSpeed;
         this.currentSpeed = initialStats.movementSpeed;
         this.animationSystem.setBaseMovementSpeed(this.baseSpeed);
@@ -50,17 +51,8 @@ export class MovementSystem {
         this.animationSystem.update();
     }
 
-    private extractStats(player: Physics.Arcade.Sprite): PlayerStats {
-        const stats = player.getData('stats') as PlayerStats | undefined;
-        if (!stats) {
-            throw new Error('PlayerStats não inicializados no sprite do jogador.');
-        }
-
-        return stats;
-    }
-
     private handleProgressionUpdated(_: PlayerProgressionUpdatePayload): void {
-        this.currentSpeed = this.extractStats(this.player).movementSpeed;
+        this.currentSpeed = getRequiredPlayerStats(this.player).movementSpeed;
         this.animationSystem.onMovementSpeedChanged(this.currentSpeed);
     }
 

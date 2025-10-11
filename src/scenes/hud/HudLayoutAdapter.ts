@@ -20,8 +20,10 @@ export class HudLayoutAdapter {
         const heightRatio: number = displaySize.height / this.baseSize.height;
         const fontScale: number = Phaser.Math.Clamp(Math.min(widthRatio, heightRatio), 0.75, 1.2);
         const trackHeight: number = Phaser.Math.Clamp(12 * fontScale, 8, 18);
-        const availableWidth: number = Math.max(displaySize.width - 24, 280);
-        const maxWidth: number = Math.min(520 * fontScale, availableWidth);
+        const margin: number = 24;
+        const availableWidth: number = Math.max(displaySize.width - margin, 200);
+        const targetWidth: number = Phaser.Math.Clamp(280 * fontScale, 200, 320);
+        const maxWidth: number = Math.min(targetWidth, availableWidth);
 
         return { fontScale, trackHeight, maxWidth };
     }

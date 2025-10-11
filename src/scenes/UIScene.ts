@@ -582,14 +582,6 @@ export class UIScene extends Scene {
         `;
         dom.createFromHTML(html);
 
-        const containerElement: HTMLElement = dom.node as HTMLElement;
-        containerElement.style.display = 'block';
-        containerElement.style.width = '100%';
-        containerElement.style.height = '100%';
-        containerElement.style.left = '0';
-        containerElement.style.top = '0';
-        containerElement.style.pointerEvents = 'none';
-
         const rootElement = dom.node as HTMLElement;
         const waveElement = this.queryHudElement(rootElement, '[data-hud="wave"]');
         this.hudElements = {

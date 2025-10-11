@@ -2,6 +2,7 @@ import Phaser, { Scene } from 'phaser';
 import { ConfigService } from '../config/ConfigService';
 import type { DerivedAttributes, PlayerStats, PrimaryAttributes } from '../config/types';
 import type { PlayerProgressionUpdatePayload } from '../systems/PlayerProgressionSystem';
+import { HudLayoutAdapter, type HudLayoutMetrics } from './hud/HudLayoutAdapter';
 
 interface WaveStartedEventPayload {
     readonly waveNumber: number;
@@ -110,9 +111,12 @@ export class UIScene extends Scene {
     private levelUpOverlayElement!: HTMLElement;
     private lastAvailableAttributePoints: number = 0;
     private readonly onAttributeButtonClicked: (event: Event) => void;
+    private readonly hudLayoutAdapter: HudLayoutAdapter;
+    private lastHudLayoutMetrics?: HudLayoutMetrics;
 
     constructor() {
         super('UIScene');
+        this.hudLayoutAdapter = new HudLayoutAdapter();
         this.onAttributeButtonClicked = (event: Event): void => {
             const target = event.currentTarget as HTMLButtonElement | null;
             const attributeKey = target?.dataset.attribute as AttributeKey | undefined;
@@ -398,13 +402,22 @@ export class UIScene extends Scene {
                     opacity: 1;
                 }
             }
-            @media (max-width: 768px) {
+            @media (max-width: 1024px) {
                 .hud-root {
-                    width: min(100%, 420px);
-                    gap: 10px;
+                    width: min(100%, 480px);
+                    gap: clamp(8px, 1.8vw, 16px);
                 }
                 .hud-status {
                     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                }
+            }
+            @media (max-width: 768px) {
+                .hud-root {
+                    width: min(100%, 420px);
+                    gap: clamp(8px, 2.4vw, 14px);
+                }
+                .hud-status {
+                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                 }
                 .hud-top {
                     flex-direction: column;
@@ -421,15 +434,18 @@ export class UIScene extends Scene {
                     align-items: stretch;
                 }
             }
-            @media (max-width: 480px) {
+            @media (max-width: 600px) {
                 .hud-root {
                     padding: 10px;
                 }
                 .hud-status {
-                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
                 }
                 .hud-levelup-overlay {
                     padding-bottom: 24px;
+                }
+                .hud-resource {
+                    padding: clamp(6px, 2.2vw, 12px);
                 }
             }
         `;
@@ -529,7 +545,7 @@ export class UIScene extends Scene {
     }
 
     private updateHudScaling(
-        gameSize: Phaser.Structs.Size,
+        _gameSize: Phaser.Structs.Size,
         _baseSize?: Phaser.Structs.Size,
         _displaySize?: Phaser.Structs.Size,
         _resolution?: number,
@@ -537,17 +553,25 @@ export class UIScene extends Scene {
         if (!this.hudContainer) {
             return;
         }
+        const displaySize: Phaser.Structs.Size = _displaySize ?? this.scale.displaySize;
         const rootElement = this.hudContainer.node as HTMLElement;
-        const baseWidth = 1280;
-        const baseHeight = 720;
-        const widthRatio = gameSize.width / baseWidth;
-        const heightRatio = gameSize.height / baseHeight;
-        const fontScale = Phaser.Math.Clamp(Math.min(widthRatio, heightRatio), 0.75, 1.2);
-        rootElement.style.setProperty('--hud-font-scale', fontScale.toFixed(3));
-        const trackHeight = Phaser.Math.Clamp(12 * fontScale, 8, 18);
-        rootElement.style.setProperty('--hud-resource-track-height', `${trackHeight.toFixed(2)}px`);
-        const targetMaxWidth = Math.min(520 * fontScale, Math.max(gameSize.width - 24, 280));
-        rootElement.style.maxWidth = `${targetMaxWidth}px`;
+        const metrics: HudLayoutMetrics = this.hudLayoutAdapter.calculateMetrics(displaySize);
+
+        const previousMetrics = this.lastHudLayoutMetrics;
+        if (!this.hudLayoutAdapter.hasSignificantChange(previousMetrics, metrics)) {
+            return;
+        }
+        if (!previousMetrics || this.hudLayoutAdapter.hasDifference(previousMetrics.fontScale, metrics.fontScale)) {
+            rootElement.style.setProperty('--hud-font-scale', metrics.fontScale.toFixed(3));
+        }
+        if (!previousMetrics || this.hudLayoutAdapter.hasDifference(previousMetrics.trackHeight, metrics.trackHeight)) {
+            rootElement.style.setProperty('--hud-resource-track-height', `${metrics.trackHeight.toFixed(2)}px`);
+        }
+        if (!previousMetrics || this.hudLayoutAdapter.hasDifference(previousMetrics.maxWidth, metrics.maxWidth)) {
+            rootElement.style.maxWidth = `${metrics.maxWidth.toFixed(2)}px`;
+        }
+
+        this.lastHudLayoutMetrics = metrics;
     }
 
     private queryHudElement(root: HTMLElement, selector: string): HTMLElement {
@@ -638,6 +662,7 @@ export class UIScene extends Scene {
         if (this.hudContainer) {
             this.hudContainer.destroy();
         }
+        this.lastHudLayoutMetrics = undefined;
     }
 
     private formatWaveText(currentWave: number, totalWaves: number): string {

@@ -180,7 +180,8 @@ export class UIScene extends Scene {
                 flex-direction: column;
                 gap: clamp(8px, 1.2vw, 16px);
                 padding: clamp(8px, 1.4vw, 18px);
-                width: min(100%, 520px);
+                width: auto;
+                max-width: clamp(220px, 22vw, 320px);
                 pointer-events: none;
                 color: #ffffff;
                 font-family: 'Trebuchet MS', sans-serif;
@@ -197,9 +198,9 @@ export class UIScene extends Scene {
                 pointer-events: none;
             }
             .hud-status {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                gap: clamp(6px, 1vw, 14px);
+                display: flex;
+                flex-direction: column;
+                gap: clamp(4px, 0.8vw, 12px);
                 background: rgba(9, 10, 15, 0.7);
                 border: 1px solid rgba(255, 255, 255, 0.16);
                 border-radius: 12px;
@@ -226,6 +227,7 @@ export class UIScene extends Scene {
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 border-radius: 10px;
                 box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 12px rgba(0, 0, 0, 0.35);
+                width: clamp(180px, 20vw, 260px);
             }
             .hud-resource__header {
                 display: flex;
@@ -404,20 +406,12 @@ export class UIScene extends Scene {
             }
             @media (max-width: 1024px) {
                 .hud-root {
-                    width: min(100%, 480px);
                     gap: clamp(8px, 1.8vw, 16px);
-                }
-                .hud-status {
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                 }
             }
             @media (max-width: 768px) {
                 .hud-root {
-                    width: min(100%, 420px);
                     gap: clamp(8px, 2.4vw, 14px);
-                }
-                .hud-status {
-                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                 }
                 .hud-top {
                     flex-direction: column;
@@ -437,9 +431,6 @@ export class UIScene extends Scene {
             @media (max-width: 600px) {
                 .hud-root {
                     padding: 10px;
-                }
-                .hud-status {
-                    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
                 }
                 .hud-levelup-overlay {
                     padding-bottom: 24px;

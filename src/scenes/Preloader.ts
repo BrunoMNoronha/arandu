@@ -18,6 +18,7 @@ export class Preloader extends Scene {
     }
 
     public create(): void {
+        this.scale.refresh();
         this.scene.start('DungeonScene');
     }
 }

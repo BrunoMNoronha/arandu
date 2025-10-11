@@ -1,6 +1,7 @@
 import { Scene, Physics } from 'phaser';
 import { HealthComponent } from '../components/HealthComponent';
 import type { PlayerAttackDerivedStats, PlayerStats } from '../config/types';
+import { getRequiredPlayerStats } from './utils/getRequiredPlayerStats';
 import type { PlayerProgressionUpdatePayload } from './PlayerProgressionSystem';
 
 export class AttackSystem {
@@ -18,7 +19,7 @@ export class AttackSystem {
         this.scene = scene;
         this.player = player;
         this.attackKey = this.scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        const playerStats: PlayerStats = this.extractStats(player);
+        const playerStats: PlayerStats = getRequiredPlayerStats(player);
         this.attackStats = { ...playerStats.attack };
         this.randomGenerator = new Phaser.Math.RandomDataGenerator();
         this.sceneEvents = this.scene.game.events;
@@ -88,15 +89,6 @@ export class AttackSystem {
         return hitbox;
     }
 
-    private extractStats(player: Physics.Arcade.Sprite): PlayerStats {
-        const stats = player.getData('stats') as PlayerStats | undefined;
-        if (!stats) {
-            throw new Error('PlayerStats não inicializados no sprite do jogador.');
-        }
-
-        return stats;
-    }
-
     private rollDamage(): { damage: number; isCritical: boolean } {
         const roll = this.randomGenerator.realInRange(0, 100);
         const isCritical = roll < this.attackStats.criticalChance;
@@ -106,7 +98,7 @@ export class AttackSystem {
     }
 
     private onPlayerProgressionUpdated(_payload: PlayerProgressionUpdatePayload): void {
-        const updatedStats: PlayerStats = this.extractStats(this.player);
+        const updatedStats: PlayerStats = getRequiredPlayerStats(this.player);
         this.attackStats = { ...updatedStats.attack };
     }
 

@@ -37,6 +37,10 @@ class BasicHudResource implements HudResource {
     private readonly fillElement?: HTMLElement;
     private readonly extraElements: readonly HTMLElement[];
 
+    private lastCurrent: number = NaN;
+    private lastMax: number = NaN;
+    private lastDisplayText: string | undefined;
+
     public constructor(valueElement: HTMLElement, fillElement?: HTMLElement, extraElements: readonly HTMLElement[] = []) {
         this.valueElement = valueElement;
         this.fillElement = fillElement;
@@ -44,6 +48,10 @@ class BasicHudResource implements HudResource {
     }
 
     public setValue(current: number, max: number, displayText?: string): void {
+        if (this.lastCurrent === current && this.lastMax === max && this.lastDisplayText === displayText) {
+            return;
+        }
+
         const safeMax = Math.max(max, 0);
         const percentage = safeMax > 0 ? Math.min(Math.max(current / safeMax, 0), 1) : 0;
         this.valueElement.textContent = displayText ?? `${current}/${max}`;
@@ -53,6 +61,10 @@ class BasicHudResource implements HudResource {
             this.fillElement.setAttribute('aria-valuenow', current.toString());
             this.fillElement.setAttribute('aria-valuemax', safeMax.toString());
         }
+
+        this.lastCurrent = current;
+        this.lastMax = max;
+        this.lastDisplayText = displayText;
     }
 
     public setLevel(level: number, displayText?: string): void {
@@ -73,6 +85,10 @@ class BasicHudResource implements HudResource {
         for (const element of this.extraElements) {
             element.removeAttribute('data-level');
         }
+
+        this.lastCurrent = NaN;
+        this.lastMax = NaN;
+        this.lastDisplayText = undefined;
     }
 }
 

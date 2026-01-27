@@ -13,6 +13,7 @@ export class MovementSystem {
     private readonly baseSpeed: number;
     private readonly progressionHandler: (payload: PlayerProgressionUpdatePayload) => void;
     private sceneEvents: Phaser.Events.EventEmitter | null = null;
+    private readonly inputVector: Phaser.Math.Vector2 = new Phaser.Math.Vector2(0, 0);
 
     constructor(cursors: Types.Input.Keyboard.CursorKeys, player: Physics.Arcade.Sprite) {
         this.cursors = cursors;
@@ -29,25 +30,25 @@ export class MovementSystem {
     }
 
     public update(): void {
-        const input: Phaser.Math.Vector2 = new Phaser.Math.Vector2(0, 0);
+        this.inputVector.set(0, 0);
 
         if (this.cursors.left.isDown) {
-            input.x -= 1;
+            this.inputVector.x -= 1;
         } else if (this.cursors.right.isDown) {
-            input.x += 1;
+            this.inputVector.x += 1;
         }
 
         if (this.cursors.up.isDown) {
-            input.y -= 1;
+            this.inputVector.y -= 1;
         } else if (this.cursors.down.isDown) {
-            input.y += 1;
+            this.inputVector.y += 1;
         }
 
-        if (input.lengthSq() > 0) {
-            input.normalize().scale(this.currentSpeed);
+        if (this.inputVector.lengthSq() > 0) {
+            this.inputVector.normalize().scale(this.currentSpeed);
         }
 
-        this.player.setVelocity(input.x, input.y);
+        this.player.setVelocity(this.inputVector.x, this.inputVector.y);
         this.animationSystem.update();
     }
 

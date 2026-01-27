@@ -2,6 +2,7 @@ import Phaser, { Scene } from 'phaser';
 import { ConfigService } from '../config/ConfigService';
 import type { PlayerStats } from '../config/types';
 import type { PlayerProgressionUpdatePayload } from '../systems/PlayerProgressionSystem';
+import { BasicHudResource, type HudResource, type ResourceKind } from './HudResources';
 
 interface WaveStartedEventPayload {
     readonly waveNumber: number;
@@ -18,62 +19,11 @@ interface ResourceUpdatePayload {
     readonly max: number;
 }
 
-type ResourceKind = 'level' | 'health' | 'mana' | 'experience';
-
-interface HudResource {
-    setValue(current: number, max: number, displayText?: string): void;
-    setLevel(level: number, displayText?: string): void;
-}
-
 interface HudBehavior {
     getResource(kind: ResourceKind): HudResource;
     onProgressionUpdated(payload: PlayerProgressionUpdatePayload): void;
     onPlayerStatsInitialized(stats: PlayerStats): void;
     destroy(): void;
-}
-
-class BasicHudResource implements HudResource {
-    private readonly valueElement: HTMLElement;
-    private readonly fillElement?: HTMLElement;
-    private readonly extraElements: readonly HTMLElement[];
-
-    public constructor(valueElement: HTMLElement, fillElement?: HTMLElement, extraElements: readonly HTMLElement[] = []) {
-        this.valueElement = valueElement;
-        this.fillElement = fillElement;
-        this.extraElements = extraElements;
-    }
-
-    public setValue(current: number, max: number, displayText?: string): void {
-        const safeMax = Math.max(max, 0);
-        const percentage = safeMax > 0 ? Math.min(Math.max(current / safeMax, 0), 1) : 0;
-        this.valueElement.textContent = displayText ?? `${current}/${max}`;
-        if (this.fillElement) {
-            this.fillElement.style.width = `${percentage * 100}%`;
-            this.fillElement.setAttribute('aria-valuemin', '0');
-            this.fillElement.setAttribute('aria-valuenow', current.toString());
-            this.fillElement.setAttribute('aria-valuemax', safeMax.toString());
-        }
-    }
-
-    public setLevel(level: number, displayText?: string): void {
-        this.valueElement.textContent = displayText ?? level.toString();
-        for (const element of this.extraElements) {
-            element.setAttribute('data-level', level.toString());
-        }
-    }
-
-    public reset(): void {
-        this.valueElement.textContent = '';
-        if (this.fillElement) {
-            this.fillElement.style.width = '0%';
-            this.fillElement.setAttribute('aria-valuemin', '0');
-            this.fillElement.setAttribute('aria-valuenow', '0');
-            this.fillElement.setAttribute('aria-valuemax', '0');
-        }
-        for (const element of this.extraElements) {
-            element.removeAttribute('data-level');
-        }
-    }
 }
 
 class NullHudResource implements HudResource {

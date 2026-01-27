@@ -1,0 +1,4 @@
+Baseline Results:
+Iterations: 10000
+Time: 293.88ms
+Mutations: 40000

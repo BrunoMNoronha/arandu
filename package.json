@@ -3,10 +3,15 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "benchmark": "tsx benchmarks/hud_benchmark.ts"
   },
   "devDependencies": {
     "@types/jsdom": "^27.0.0",

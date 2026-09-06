@@ -42,8 +42,8 @@ Siga os passos abaixo para configurar e rodar o ambiente de desenvolvimento loca
 
 ### Pré-requisitos
 
-* Node.js (versão 18 ou superior recomendada)
-* NPM ou Yarn
+* Node.js (versão 22.12 ou superior)
+* pnpm (habilite com `corepack enable` ou instale via `npm install -g pnpm`)
 
 ### Instalação e Execução
 
@@ -55,12 +55,12 @@ Siga os passos abaixo para configurar e rodar o ambiente de desenvolvimento loca
 
 2.  Instale as dependências:
     ```sh
-    npm install
+    pnpm install
     ```
 
 3.  Inicie o servidor de desenvolvimento:
     ```sh
-    npm run dev
+    pnpm dev
     ```
 
 4.  Acesse a aplicação:

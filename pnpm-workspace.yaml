@@ -1,0 +1,4 @@
+# Dependências autorizadas a rodar scripts de pós-instalação (pnpm 10+ bloqueia por padrão).
+# esbuild precisa disso para baixar o binário da plataforma usado por vite e tsx.
+allowBuilds:
+  esbuild: true
